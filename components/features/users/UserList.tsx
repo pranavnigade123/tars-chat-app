@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useDebounce } from "@/lib/hooks/useDebounce";
@@ -11,52 +12,47 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 interface UserListProps {
   currentUserId: string;
+  onConversationCreated?: () => void;
 }
 
-export function UserList({ currentUserId }: UserListProps) {
+export function UserList({ currentUserId, onConversationCreated }: UserListProps) {
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [isCreatingConversation, setIsCreatingConversation] = useState(false);
 
-  // Debounce search query to avoid excessive filtering
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
-
-  // Fetch all users except current user
-  const users = useQuery(api.users.getAllUsersExceptCurrent, {
-    currentUserId,
-  });
-
-  // Mutation to create or get conversation
+  const users = useQuery(api.users.getAllUsersExceptCurrent, { currentUserId });
   const getOrCreateConversation = useMutation(api.conversations.getOrCreateConversation);
 
-  // Filter and sort users
   const filteredAndSortedUsers = useMemo(() => {
     if (!users) return [];
     const filtered = filterUsers(users, debouncedSearchQuery);
     return sortUsers(filtered);
   }, [users, debouncedSearchQuery]);
 
-  // Handle user selection
   const handleUserSelect = async (userId: string) => {
     setSelectedUserId(userId);
     setIsCreatingConversation(true);
 
     try {
-      const conversationId = await getOrCreateConversation({
+      await getOrCreateConversation({
         participantIds: [currentUserId, userId],
       });
       
-      // TODO: Navigate to conversation page when implemented
-      console.log("Conversation created/retrieved:", conversationId);
+      if (onConversationCreated) {
+        onConversationCreated();
+      } else {
+        router.push("/messages");
+      }
     } catch (error) {
       console.error("Failed to create conversation:", error);
-      // TODO: Show error toast
+      alert("Failed to start conversation. Please try again.");
     } finally {
       setIsCreatingConversation(false);
     }
   };
 
-  // Loading state
   if (users === undefined) {
     return (
       <div className="flex h-full flex-col">
@@ -78,7 +74,6 @@ export function UserList({ currentUserId }: UserListProps) {
     );
   }
 
-  // Error state
   if (users === null) {
     return (
       <div className="flex h-full items-center justify-center p-4">
@@ -95,7 +90,6 @@ export function UserList({ currentUserId }: UserListProps) {
     );
   }
 
-  // Empty state
   if (users.length === 0) {
     return (
       <div className="flex h-full items-center justify-center p-4">
@@ -104,7 +98,6 @@ export function UserList({ currentUserId }: UserListProps) {
     );
   }
 
-  // No search results
   if (filteredAndSortedUsers.length === 0) {
     return (
       <div className="flex h-full flex-col">
@@ -124,7 +117,6 @@ export function UserList({ currentUserId }: UserListProps) {
 
   return (
     <div className="flex h-full flex-col">
-      {/* Search bar */}
       <div className="border-b bg-white p-4">
         <SearchBar
           value={searchQuery}
@@ -133,7 +125,6 @@ export function UserList({ currentUserId }: UserListProps) {
         />
       </div>
 
-      {/* User list */}
       <div className="flex-1 overflow-y-auto p-2">
         {filteredAndSortedUsers.map((user) => (
           <UserListItem
@@ -145,7 +136,6 @@ export function UserList({ currentUserId }: UserListProps) {
         ))}
       </div>
 
-      {/* Loading overlay */}
       {isCreatingConversation && (
         <div className="absolute inset-0 flex items-center justify-center bg-white/50">
           <div className="rounded-lg bg-white p-4 shadow-lg">

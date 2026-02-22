@@ -8,20 +8,22 @@ import { getInitials } from "@/lib/utils/getInitials";
 import { formatTimestamp } from "@/lib/utils/formatTimestamp";
 import { truncateMessage } from "@/lib/utils/truncateMessage";
 import { cn } from "@/lib/utils";
+import { Plus } from "lucide-react";
 import type { Id } from "@/convex/_generated/dataModel";
 
 interface ConversationSidebarProps {
   selectedConversationId: Id<"conversations"> | null;
   onSelectConversation: (conversationId: Id<"conversations">) => void;
+  onNewChat: () => void;
 }
 
 export function ConversationSidebar({
   selectedConversationId,
   onSelectConversation,
+  onNewChat,
 }: ConversationSidebarProps) {
   const conversations = useQuery(api.conversations.getUserConversations);
 
-  // Loading state
   if (conversations === undefined) {
     return (
       <div className="flex h-full flex-col border-r bg-white">
@@ -43,7 +45,6 @@ export function ConversationSidebar({
     );
   }
 
-  // Error state
   if (conversations === null) {
     return (
       <div className="flex h-full flex-col items-center justify-center border-r bg-white p-4">
@@ -58,7 +59,6 @@ export function ConversationSidebar({
     );
   }
 
-  // Empty state
   if (conversations.length === 0) {
     return (
       <div className="flex h-full flex-col border-r bg-white">
@@ -69,7 +69,7 @@ export function ConversationSidebar({
           <p className="text-center text-gray-600">
             No conversations yet
             <br />
-            <span className="text-sm">Start a chat from the users page</span>
+            <span className="text-sm">Start a chat from the users tab</span>
           </p>
         </div>
       </div>
@@ -78,12 +78,19 @@ export function ConversationSidebar({
 
   return (
     <div className="flex h-full flex-col border-r bg-white">
-      {/* Header */}
       <div className="border-b p-4">
-        <h2 className="text-lg font-semibold text-gray-900">Messages</h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-gray-900">Messages</h2>
+          <button
+            onClick={onNewChat}
+            className="rounded-lg p-2 hover:bg-gray-100 transition-colors"
+            title="Start new chat"
+          >
+            <Plus className="h-5 w-5 text-gray-600" />
+          </button>
+        </div>
       </div>
 
-      {/* Conversation List */}
       <div className="flex-1 overflow-y-auto">
         {conversations.map((conversation) => (
           <button
@@ -110,7 +117,7 @@ export function ConversationSidebar({
                   {conversation.otherUser.name}
                 </p>
                 {conversation.latestMessage && (
-                  <span className="text-xs text-gray-500 flex-shrink-0">
+                  <span className="text-xs text-gray-500 shrink-0">
                     {formatTimestamp(conversation.latestMessage.sentAt)}
                   </span>
                 )}
