@@ -104,6 +104,7 @@ export const sendMessage = mutation({
       content: trimmedContent,
       sentAt: Date.now(),
       isDeleted: false,
+      readBy: [identity.subject], // Sender has read their own message
     });
 
     // Update conversation's lastMessageAt
@@ -112,5 +113,117 @@ export const sendMessage = mutation({
     });
 
     return messageId;
+  },
+});
+
+/**
+ * Mark all messages in a conversation as read by the current user
+ * Only marks messages sent by other participants
+ */
+export const markMessagesAsRead = mutation({
+  args: {
+    conversationId: v.id("conversations"),
+  },
+  handler: async (ctx, args) => {
+    // Get authenticated user
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    // Verify conversation exists and user is a participant
+    const conversation = await ctx.db.get(args.conversationId);
+    if (!conversation) {
+      throw new Error("Conversation not found");
+    }
+
+    if (!conversation.participants.includes(identity.subject)) {
+      throw new Error("Not authorized to access this conversation");
+    }
+
+    // Get all unread messages in this conversation (not sent by current user)
+    const messages = await ctx.db
+      .query("messages")
+      .withIndex("by_conversation_and_time", (q) =>
+        q.eq("conversationId", args.conversationId)
+      )
+      .filter((q) => q.eq(q.field("isDeleted"), false))
+      .collect();
+
+    // Mark messages as read if not already read by current user
+    let markedCount = 0;
+    for (const message of messages) {
+      // Skip messages sent by current user
+      if (message.senderId === identity.subject) {
+        continue;
+      }
+
+      // Handle migration: readBy might be undefined for old messages
+      const readBy = message.readBy || [];
+      
+      // Skip if already read by current user
+      if (readBy.includes(identity.subject)) {
+        continue;
+      }
+
+      // Add current user to readBy array
+      await ctx.db.patch(message._id, {
+        readBy: [...readBy, identity.subject],
+      });
+      markedCount++;
+    }
+
+    return { markedCount };
+  },
+});
+
+/**
+ * Get unread message count for a conversation
+ * Returns count of messages not read by current user
+ */
+export const getUnreadCount = query({
+  args: {
+    conversationId: v.id("conversations"),
+  },
+  handler: async (ctx, args) => {
+    // Get authenticated user
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return 0;
+    }
+
+    // Verify conversation exists and user is a participant
+    const conversation = await ctx.db.get(args.conversationId);
+    if (!conversation || !conversation.participants.includes(identity.subject)) {
+      return 0;
+    }
+
+    // Get all messages in this conversation
+    const messages = await ctx.db
+      .query("messages")
+      .withIndex("by_conversation_and_time", (q) =>
+        q.eq("conversationId", args.conversationId)
+      )
+      .filter((q) => q.eq(q.field("isDeleted"), false))
+      .collect();
+
+    // Count unread messages (not sent by current user and not read by current user)
+    let unreadCount = 0;
+    for (const message of messages) {
+      // Skip messages sent by current user
+      if (message.senderId === identity.subject) {
+        continue;
+      }
+
+      // Handle migration: readBy might be undefined for old messages
+      const readBy = message.readBy || [];
+      
+      // Count if not read by current user
+      if (!readBy.includes(identity.subject)) {
+        unreadCount++;
+      }
+    }
+
+    return unreadCount;
   },
 });

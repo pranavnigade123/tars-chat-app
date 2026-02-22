@@ -7,6 +7,7 @@ import { AppHeader } from "@/components/features/navigation/AppHeader";
 import { ConversationSidebar } from "@/components/features/messaging/ConversationSidebar";
 import { MessageFeed } from "@/components/features/messaging/MessageFeed";
 import { MessageInput } from "@/components/features/messaging/MessageInput";
+import { TypingIndicator } from "@/components/features/messaging/TypingIndicator";
 import { ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Id } from "@/convex/_generated/dataModel";
@@ -27,9 +28,25 @@ export default function MessagesPage() {
     }
   }, [conversationIdFromUrl]);
 
-  if (isLoaded && !user) {
-    redirect("/sign-in");
-  }
+  // Keyboard navigation: Escape key to go back on mobile
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && showMobileChat && window.innerWidth < 1024) {
+        setShowMobileChat(false);
+        setSelectedConversationId(null);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [showMobileChat]);
+
+  // Handle redirect after all hooks
+  useEffect(() => {
+    if (isLoaded && !user) {
+      redirect("/sign-in");
+    }
+  }, [isLoaded, user]);
 
   if (!isLoaded || !user) {
     return (
@@ -48,18 +65,6 @@ export default function MessagesPage() {
     setShowMobileChat(false);
     setSelectedConversationId(null);
   };
-
-  // Keyboard navigation: Escape key to go back on mobile
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && showMobileChat && window.innerWidth < 1024) {
-        handleBackToSidebar();
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [showMobileChat]);
 
   return (
     <div className="flex h-screen flex-col">
@@ -106,6 +111,7 @@ export default function MessagesPage() {
                 conversationId={selectedConversationId}
                 currentUserId={user.id}
               />
+              <TypingIndicator conversationId={selectedConversationId} />
               <MessageInput conversationId={selectedConversationId} />
             </>
           ) : (

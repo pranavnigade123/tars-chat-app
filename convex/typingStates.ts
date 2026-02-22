@@ -1,0 +1,193 @@
+import { mutation, query, internalMutation } from "./_generated/server";
+import { v } from "convex/values";
+
+const TYPING_TIMEOUT = 2000; // 2 seconds in milliseconds
+const CLEANUP_AGE = 5 * 60 * 1000; // 5 minutes in milliseconds
+
+/**
+ * Set or update typing state for the current user in a conversation
+ */
+export const setTypingState = mutation({
+  args: {
+    conversationId: v.id("conversations"),
+  },
+  handler: async (ctx, args) => {
+    // Get authenticated user
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    // Get user record
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    // Validate conversation exists and user is a member
+    const conversation = await ctx.db.get(args.conversationId);
+    if (!conversation) {
+      throw new Error("Conversation not found");
+    }
+
+    if (!conversation.participants.includes(identity.subject)) {
+      throw new Error("Not authorized: user is not a member of this conversation");
+    }
+
+    // Find existing typing state
+    const existingState = await ctx.db
+      .query("typingStates")
+      .withIndex("by_conversation_and_user", (q) =>
+        q.eq("conversationId", args.conversationId).eq("userId", user._id)
+      )
+      .unique();
+
+    // Upsert typing state
+    if (existingState) {
+      await ctx.db.patch(existingState._id, {
+        lastTypingAt: Date.now(),
+      });
+    } else {
+      await ctx.db.insert("typingStates", {
+        userId: user._id,
+        conversationId: args.conversationId,
+        lastTypingAt: Date.now(),
+      });
+    }
+
+    return { success: true };
+  },
+});
+
+/**
+ * Clear typing state for the current user in a conversation
+ */
+export const clearTypingState = mutation({
+  args: {
+    conversationId: v.id("conversations"),
+  },
+  handler: async (ctx, args) => {
+    // Get authenticated user
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    // Get user record
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    // Find and delete typing state
+    const typingState = await ctx.db
+      .query("typingStates")
+      .withIndex("by_conversation_and_user", (q) =>
+        q.eq("conversationId", args.conversationId).eq("userId", user._id)
+      )
+      .unique();
+
+    if (typingState) {
+      await ctx.db.delete(typingState._id);
+    }
+
+    return { success: true };
+  },
+});
+
+/**
+ * Get active typing states for a conversation
+ * Returns users who are currently typing (excluding the current user)
+ */
+export const getTypingState = query({
+  args: {
+    conversationId: v.id("conversations"),
+  },
+  handler: async (ctx, args) => {
+    // Get authenticated user
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return [];
+    }
+
+    // Get user record
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!user) {
+      return [];
+    }
+
+    // Validate conversation exists and user is a member
+    const conversation = await ctx.db.get(args.conversationId);
+    if (!conversation || !conversation.participants.includes(identity.subject)) {
+      return [];
+    }
+
+    // Get all typing states for this conversation
+    const typingStates = await ctx.db
+      .query("typingStates")
+      .withIndex("by_conversation_and_user", (q) =>
+        q.eq("conversationId", args.conversationId)
+      )
+      .collect();
+
+    // Filter out current user and expired states
+    const now = Date.now();
+    const activeTypingStates = typingStates.filter(
+      (state) =>
+        state.userId !== user._id && // Exclude current user
+        now - state.lastTypingAt < TYPING_TIMEOUT // Only active states
+    );
+
+    // Get user information for each typing state
+    const typingUsers = await Promise.all(
+      activeTypingStates.map(async (state) => {
+        const typingUser = await ctx.db.get(state.userId);
+        return {
+          userId: state.userId,
+          name: typingUser?.name || "Unknown",
+          lastTypingAt: state.lastTypingAt,
+        };
+      })
+    );
+
+    return typingUsers;
+  },
+});
+
+/**
+ * Cleanup expired typing states (run via cron)
+ * Deletes typing states older than 5 minutes
+ */
+export const cleanupExpiredTypingStates = internalMutation({
+  handler: async (ctx) => {
+    const now = Date.now();
+    const cutoffTime = now - CLEANUP_AGE;
+
+    // Find old typing states
+    const oldStates = await ctx.db
+      .query("typingStates")
+      .withIndex("by_lastTypingAt")
+      .filter((q) => q.lt(q.field("lastTypingAt"), cutoffTime))
+      .collect();
+
+    // Delete old states
+    for (const state of oldStates) {
+      await ctx.db.delete(state._id);
+    }
+
+    console.log(`Cleaned up ${oldStates.length} expired typing states`);
+    return { deletedCount: oldStates.length };
+  },
+});

@@ -30,7 +30,15 @@ export default defineSchema({
     content: v.string(),
     sentAt: v.number(),
     isDeleted: v.boolean(),
+    readBy: v.optional(v.array(v.string())), // Array of clerk IDs who have read this message
   })
     .index("by_conversation_and_time", ["conversationId", "sentAt"])
     .index("by_sender", ["senderId"]),
+  typingStates: defineTable({
+    userId: v.id("users"),
+    conversationId: v.id("conversations"),
+    lastTypingAt: v.number(),
+  })
+    .index("by_conversation_and_user", ["conversationId", "userId"])
+    .index("by_lastTypingAt", ["lastTypingAt"]),
 });

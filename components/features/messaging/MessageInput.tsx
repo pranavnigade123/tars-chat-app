@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, useRef, KeyboardEvent } from "react";
+import { useState, useRef, KeyboardEvent, useCallback, useEffect } from "react";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { Send } from "lucide-react";
+import { Send, Smile } from "lucide-react";
 import type { Id } from "@/convex/_generated/dataModel";
+import { useDebounce } from "@/lib/hooks/useDebouncedCallback";
+import { cn } from "@/lib/utils";
 
 interface MessageInputProps {
   conversationId: Id<"conversations">;
@@ -14,14 +16,41 @@ export function MessageInput({ conversationId }: MessageInputProps) {
   const [content, setContent] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isFocused, setIsFocused] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   
   const sendMessage = useMutation(api.messages.sendMessage);
+  const setTypingState = useMutation(api.typingStates.setTypingState);
+  const clearTypingState = useMutation(api.typingStates.clearTypingState);
+
+  // Auto-resize textarea
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = "auto";
+      textarea.style.height = Math.min(textarea.scrollHeight, 120) + "px";
+    }
+  }, [content]);
+
+  // Debounced typing state update
+  const debouncedSetTyping = useCallback(() => {
+    setTypingState({ conversationId }).catch((err) => {
+      console.error("Failed to set typing state:", err);
+    });
+  }, [conversationId, setTypingState]);
+
+  const debouncedTyping = useDebounce(debouncedSetTyping, 300);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      clearTypingState({ conversationId }).catch(() => {});
+    };
+  }, [conversationId, clearTypingState]);
 
   const handleSend = async () => {
     const trimmedContent = content.trim();
     
-    // Validate content
     if (!trimmedContent) {
       return;
     }
@@ -30,12 +59,13 @@ export function MessageInput({ conversationId }: MessageInputProps) {
     setError(null);
 
     try {
+      await clearTypingState({ conversationId });
+      
       await sendMessage({
         conversationId,
         content: trimmedContent,
       });
 
-      // Clear input and focus
       setContent("");
       textareaRef.current?.focus();
     } catch (err) {
@@ -47,7 +77,6 @@ export function MessageInput({ conversationId }: MessageInputProps) {
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    // Send on Enter, new line on Shift+Enter
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSend();
@@ -55,40 +84,61 @@ export function MessageInput({ conversationId }: MessageInputProps) {
   };
 
   return (
-    <div className="border-t bg-white p-4">
+    <div className="border-t bg-white px-4 py-3 shadow-sm">
       {error && (
-        <div className="mb-2 rounded-lg bg-red-50 p-2 text-sm text-red-600">
+        <div className="mb-3 rounded-xl bg-red-50 border border-red-200 p-3 text-sm text-red-600 flex items-center gap-2">
+          <span className="text-red-500">⚠</span>
           {error}
         </div>
       )}
       
-      <div className="flex gap-2">
+      <div 
+        className={cn(
+          "flex items-end gap-2 rounded-2xl border-2 bg-gray-50 px-4 py-2 transition-all duration-200",
+          isFocused ? "border-blue-500 bg-white shadow-md" : "border-gray-200"
+        )}
+      >
+        <button
+          type="button"
+          className="mb-1 p-1.5 text-gray-400 hover:text-gray-600 transition-colors rounded-lg hover:bg-gray-100"
+          title="Emoji (coming soon)"
+        >
+          <Smile className="h-5 w-5" />
+        </button>
+        
         <textarea
           ref={textareaRef}
           value={content}
-          onChange={(e) => setContent(e.target.value)}
+          onChange={(e) => {
+            setContent(e.target.value);
+            debouncedTyping();
+          }}
           onKeyDown={handleKeyDown}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
           placeholder="Type a message..."
           disabled={isSending}
           rows={1}
-          className="flex-1 resize-none rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-          style={{
-            minHeight: "42px",
-            maxHeight: "120px",
-          }}
+          className="flex-1 resize-none bg-transparent text-gray-900 placeholder:text-gray-400 focus:outline-none disabled:cursor-not-allowed max-h-[120px] py-1"
         />
         
         <button
           onClick={handleSend}
           disabled={isSending || !content.trim()}
-          className="flex h-[42px] w-[42px] items-center justify-center rounded-lg bg-blue-600 text-white transition-colors hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+          className={cn(
+            "mb-1 flex h-9 w-9 items-center justify-center rounded-full transition-all duration-200",
+            content.trim() && !isSending
+              ? "bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-md hover:shadow-lg hover:scale-105 active:scale-95"
+              : "bg-gray-200 text-gray-400 cursor-not-allowed"
+          )}
+          title="Send message"
         >
-          <Send className="h-5 w-5" />
+          <Send className="h-4 w-4" />
         </button>
       </div>
       
-      <p className="mt-1 text-xs text-gray-500">
-        Press Enter to send, Shift+Enter for new line
+      <p className="mt-2 text-xs text-gray-500 px-1">
+        Press <kbd className="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs">Enter</kbd> to send, <kbd className="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs">Shift+Enter</kbd> for new line
       </p>
     </div>
   );
