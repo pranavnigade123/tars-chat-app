@@ -81,6 +81,67 @@ export const getOrCreateConversation = mutation({
 
 
 /**
+ * Get conversation details by ID
+ * Returns conversation with participant info
+ */
+export const getConversationById = query({
+  args: {
+    conversationId: v.id("conversations"),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    const conversation = await ctx.db.get(args.conversationId);
+    if (!conversation) {
+      return null;
+    }
+
+    // Verify user is a participant
+    if (!conversation.participants.includes(identity.subject)) {
+      throw new Error("Not authorized to view this conversation");
+    }
+
+    // Get the other participant
+    const otherParticipantId = conversation.participants.find(
+      (id) => id !== identity.subject
+    );
+
+    if (!otherParticipantId) {
+      return null;
+    }
+
+    // Get other participant's user info
+    const otherUser = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", otherParticipantId))
+      .unique();
+
+    if (!otherUser) {
+      return null;
+    }
+
+    // Compute online status
+    const OFFLINE_THRESHOLD = 60 * 1000;
+    const now = Date.now();
+    const isOnline = now - otherUser.lastSeen < OFFLINE_THRESHOLD;
+
+    return {
+      ...conversation,
+      otherUser: {
+        _id: otherUser._id,
+        clerkId: otherUser.clerkId,
+        name: otherUser.name,
+        profileImage: otherUser.profileImage,
+        isOnline: isOnline,
+      },
+    };
+  },
+});
+
+/**
  * Get all conversations for the current user
  * Returns conversations with participant info and latest message preview
  */

@@ -9,6 +9,7 @@ import { formatMessageTime } from "@/lib/utils/formatTimestamp";
 import { cn } from "@/lib/utils";
 import { useEffect, useRef } from "react";
 import type { Id } from "@/convex/_generated/dataModel";
+import { NoMessagesEmpty } from "@/components/features/empty-states";
 
 interface MessageFeedProps {
   conversationId: Id<"conversations">;
@@ -17,6 +18,7 @@ interface MessageFeedProps {
 
 export function MessageFeed({ conversationId, currentUserId }: MessageFeedProps) {
   const messages = useQuery(api.messages.getMessages, { conversationId });
+  const conversation = useQuery(api.conversations.getConversationById, { conversationId });
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -62,7 +64,9 @@ export function MessageFeed({ conversationId, currentUserId }: MessageFeedProps)
   if (messages.length === 0) {
     return (
       <div className="flex h-full items-center justify-center p-4">
-        <p className="text-gray-600">No messages yet. Start the conversation!</p>
+        <NoMessagesEmpty
+          otherParticipantName={conversation?.otherUser?.name || "this user"}
+        />
       </div>
     );
   }

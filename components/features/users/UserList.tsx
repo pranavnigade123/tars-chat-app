@@ -9,6 +9,7 @@ import { filterUsers, sortUsers } from "@/lib/utils/userFilters";
 import { SearchBar } from "./SearchBar";
 import { UserListItem } from "./UserListItem";
 import { Skeleton } from "@/components/ui/skeleton";
+import { NoSearchResultsEmpty } from "@/components/features/empty-states";
 
 interface UserListProps {
   currentUserId: string;
@@ -93,7 +94,7 @@ export function UserList({ currentUserId }: UserListProps) {
     );
   }
 
-  if (filteredAndSortedUsers.length === 0) {
+  if (filteredAndSortedUsers.length === 0 && searchQuery) {
     return (
       <div className="flex h-full flex-col">
         <div className="border-b bg-white p-4">
@@ -104,7 +105,10 @@ export function UserList({ currentUserId }: UserListProps) {
           />
         </div>
         <div className="flex flex-1 items-center justify-center p-4">
-          <p className="text-gray-600">No users match your search</p>
+          <NoSearchResultsEmpty
+            searchQuery={searchQuery}
+            onClearSearch={() => setSearchQuery("")}
+          />
         </div>
       </div>
     );

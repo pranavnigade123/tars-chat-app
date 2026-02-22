@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { Plus } from "lucide-react";
 import Link from "next/link";
 import type { Id } from "@/convex/_generated/dataModel";
+import { NoConversationsEmpty } from "@/components/features/empty-states";
 
 interface ConversationSidebarProps {
   selectedConversationId: Id<"conversations"> | null;
@@ -73,16 +74,11 @@ export function ConversationSidebar({
             </Link>
           </div>
         </div>
-        <div className="flex flex-1 flex-col items-center justify-center p-4 text-center">
-          <p className="text-gray-600 mb-4">No conversations yet</p>
-          <Link
-            href="/users"
-            className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
-          >
-            <Plus className="h-4 w-4" />
-            Start a new chat
-          </Link>
-        </div>
+        <NoConversationsEmpty
+          onStartConversation={() => {
+            window.location.href = "/users";
+          }}
+        />
       </div>
     );
   }
