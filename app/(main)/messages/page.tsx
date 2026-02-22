@@ -46,34 +46,56 @@ export default function MessagesPage() {
 
   const handleBackToSidebar = () => {
     setShowMobileChat(false);
+    setSelectedConversationId(null);
   };
+
+  // Keyboard navigation: Escape key to go back on mobile
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && showMobileChat && window.innerWidth < 1024) {
+        handleBackToSidebar();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [showMobileChat]);
 
   return (
     <div className="flex h-screen flex-col">
       <AppHeader />
       
       <div className="flex flex-1 overflow-hidden">
-        <aside className={cn(
-          "w-full lg:w-80 xl:w-96 flex flex-col border-r bg-white",
-          showMobileChat && "hidden lg:flex"
-        )}>
+        <aside 
+          className={cn(
+            "w-full lg:w-80 xl:w-96 flex flex-col border-r bg-white transition-all duration-300",
+            showMobileChat && "hidden lg:flex"
+          )}
+          role="complementary"
+          aria-label="Conversations sidebar"
+        >
           <ConversationSidebar
             selectedConversationId={selectedConversationId}
             onSelectConversation={handleSelectConversation}
           />
         </aside>
 
-        <main className={cn(
-          "flex-1 flex flex-col",
-          !showMobileChat && "hidden lg:flex",
-          showMobileChat && "flex"
-        )}>
+        <main 
+          className={cn(
+            "flex-1 flex flex-col transition-all duration-300",
+            !showMobileChat && "hidden lg:flex",
+            showMobileChat && "flex"
+          )}
+          role="main"
+          aria-label="Chat area"
+        >
           {selectedConversationId ? (
             <>
               <div className="lg:hidden flex items-center gap-3 border-b bg-white px-4 py-3">
                 <button
                   onClick={handleBackToSidebar}
                   className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  aria-label="Back to conversations"
                 >
                   <ArrowLeft className="h-5 w-5 text-gray-600" />
                 </button>
