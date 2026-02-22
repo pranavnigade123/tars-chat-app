@@ -152,3 +152,21 @@ export const deleteUser = mutation({
     }
   },
 });
+
+/**
+ * Get all users except the current user
+ * Used for displaying the user list for starting conversations
+ */
+export const getAllUsersExceptCurrent = query({
+  args: {
+    currentUserId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const users = await ctx.db
+      .query("users")
+      .filter((q) => q.neq(q.field("clerkId"), args.currentUserId))
+      .collect();
+    
+    return users;
+  },
+});
