@@ -4,6 +4,7 @@ import { useQuery } from "convex/react";
 import { useUser } from "@clerk/nextjs";
 import { api } from "@/convex/_generated/api";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { StatusIndicator } from "@/components/features/presence/StatusIndicator";
 import { getInitials } from "@/lib/utils/getInitials";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -17,6 +18,12 @@ const sizeClasses = {
   md: "h-10 w-10",
   lg: "h-12 w-12",
 };
+
+// Helper function to determine if user is online
+function isUserOnline(lastSeen: number): boolean {
+  const OFFLINE_THRESHOLD = 60 * 1000; // 60 seconds
+  return Date.now() - lastSeen < OFFLINE_THRESHOLD;
+}
 
 export function UserProfile({
   showOnlineStatus = false,
@@ -35,6 +42,8 @@ export function UserProfile({
     return <UserProfileError />;
   }
 
+  const userIsOnline = isUserOnline(convexUser.lastSeen);
+
   return (
     <div className="flex items-center gap-3">
       <div className="relative">
@@ -42,15 +51,19 @@ export function UserProfile({
           <AvatarImage src={convexUser.profileImage} alt={convexUser.name} />
           <AvatarFallback>{getInitials(convexUser.name)}</AvatarFallback>
         </Avatar>
-        {showOnlineStatus && convexUser.onlineStatus && (
-          <div className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white bg-green-500" />
+        {showOnlineStatus && (
+          <StatusIndicator 
+            isOnline={userIsOnline} 
+            size="sm" 
+            className="absolute bottom-0 right-0 border-2 border-white rounded-full"
+          />
         )}
       </div>
       <div className="flex flex-col">
         <p className="text-sm font-medium">{convexUser.name}</p>
         {showOnlineStatus && (
           <p className="text-xs text-gray-500">
-            {convexUser.onlineStatus ? "Online" : "Offline"}
+            {userIsOnline ? "Online" : "Offline"}
           </p>
         )}
       </div>

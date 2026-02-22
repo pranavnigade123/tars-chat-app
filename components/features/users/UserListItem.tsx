@@ -1,5 +1,5 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { OnlineStatusIndicator } from "./OnlineStatusIndicator";
+import { StatusIndicator } from "@/components/features/presence/StatusIndicator";
 import { getInitials } from "@/lib/utils/getInitials";
 import { formatLastSeen } from "@/lib/utils";
 import { cn } from "@/lib/utils";
@@ -10,7 +10,7 @@ interface User {
   name: string;
   email: string;
   profileImage?: string;
-  onlineStatus: boolean;
+  isOnline: boolean;
   lastSeen: number;
 }
 
@@ -35,13 +35,17 @@ export function UserListItem({ user, onClick, isSelected = false }: UserListItem
           <AvatarImage src={user.profileImage} alt={user.name} />
           <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
         </Avatar>
-        <OnlineStatusIndicator online={user.onlineStatus} />
+        <StatusIndicator 
+          isOnline={user.isOnline} 
+          size="md" 
+          className="absolute -bottom-1 -right-1 border-2 border-white rounded-full"
+        />
       </div>
       
       <div className="flex-1 min-w-0">
         <p className="font-medium text-gray-900 truncate">{user.name}</p>
         <p className="text-sm text-gray-500 truncate">
-          {user.onlineStatus ? "Online" : formatLastSeen(user.lastSeen)}
+          {user.isOnline ? "Online" : formatLastSeen(user.lastSeen)}
         </p>
       </div>
     </button>

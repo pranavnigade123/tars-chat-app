@@ -131,6 +131,11 @@ export const getUserConversations = query({
           .order("desc")
           .first();
 
+        // Compute online status based on lastSeen
+        const OFFLINE_THRESHOLD = 60 * 1000; // 60 seconds
+        const now = Date.now();
+        const isOnline = now - otherUser.lastSeen < OFFLINE_THRESHOLD;
+
         return {
           ...conversation,
           otherUser: {
@@ -138,7 +143,7 @@ export const getUserConversations = query({
             clerkId: otherUser.clerkId,
             name: otherUser.name,
             profileImage: otherUser.profileImage,
-            onlineStatus: otherUser.onlineStatus,
+            isOnline: isOnline,
           },
           latestMessage: latestMessage
             ? {

@@ -26,37 +26,6 @@ export const getCurrentUser = query({
 });
 
 /**
- * Get a user by their Clerk ID
- */
-export const getUserByClerkId = query({
-  args: { clerkId: v.string() },
-  handler: async (ctx, args) => {
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
-      .unique();
-    
-    return user;
-  },
-});
-
-/**
- * Get all users who are currently online
- */
-export const getOnlineUsers = query({
-  args: {},
-  handler: async (ctx) => {
-    const users = await ctx.db
-      .query("users")
-      .withIndex("by_online_status", (q) => q.eq("onlineStatus", true))
-      .collect();
-    
-    return users;
-  },
-});
-
-
-/**
  * Sync user data from Clerk to Convex
  * Creates new user if doesn't exist, updates if exists
  */
@@ -92,44 +61,11 @@ export const syncUser = mutation({
         email: args.email,
         profileImage: args.profileImage,
         lastSeen: Date.now(),
-        onlineStatus: true,
+        isOnline: false,
       });
       
       return userId;
     }
-  },
-});
-
-/**
- * Update the online status of the current user
- */
-export const updateOnlineStatus = mutation({
-  args: {
-    onlineStatus: v.boolean(),
-  },
-  handler: async (ctx, args) => {
-    // Get authenticated user
-    const identity = await ctx.auth.getUserIdentity();
-    
-    if (!identity) {
-      throw new Error("Not authenticated");
-    }
-    
-    // Find user
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
-      .unique();
-    
-    if (!user) {
-      throw new Error("User not found");
-    }
-    
-    // Update status
-    await ctx.db.patch(user._id, {
-      onlineStatus: args.onlineStatus,
-      lastSeen: Date.now(),
-    });
   },
 });
 
@@ -154,10 +90,9 @@ export const deleteUser = mutation({
 });
 
 /**
- * Get all users except the current user
- * Used for displaying the user list for starting conversations
+ * Get all users except current user with their online status
  */
-export const getAllUsersExceptCurrent = query({
+export const getAllUsersExceptCurrentWithStatus = query({
   args: {
     currentUserId: v.string(),
   },
@@ -167,6 +102,13 @@ export const getAllUsersExceptCurrent = query({
       .filter((q) => q.neq(q.field("clerkId"), args.currentUserId))
       .collect();
     
-    return users;
+    // Add computed isOnline field
+    const OFFLINE_THRESHOLD = 60 * 1000; // 60 seconds
+    const now = Date.now();
+    
+    return users.map(user => ({
+      ...user,
+      isOnline: now - user.lastSeen < OFFLINE_THRESHOLD,
+    }));
   },
 });

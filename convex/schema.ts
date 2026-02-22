@@ -8,11 +8,12 @@ export default defineSchema({
     email: v.string(),
     profileImage: v.optional(v.string()),
     lastSeen: v.number(),
-    onlineStatus: v.boolean(),
+    isOnline: v.boolean(),
+    onlineStatus: v.optional(v.boolean()), // Temporary for cleanup
   })
     .index("by_clerk_id", ["clerkId"])
     .index("by_email", ["email"])
-    .index("by_online_status", ["onlineStatus"]),
+    .index("by_last_seen", ["lastSeen"]),
   
   conversations: defineTable({
     conversationId: v.string(),
