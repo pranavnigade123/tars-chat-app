@@ -9,18 +9,17 @@ import { formatTimestamp } from "@/lib/utils/formatTimestamp";
 import { truncateMessage } from "@/lib/utils/truncateMessage";
 import { cn } from "@/lib/utils";
 import { Plus } from "lucide-react";
+import Link from "next/link";
 import type { Id } from "@/convex/_generated/dataModel";
 
 interface ConversationSidebarProps {
   selectedConversationId: Id<"conversations"> | null;
   onSelectConversation: (conversationId: Id<"conversations">) => void;
-  onNewChat: () => void;
 }
 
 export function ConversationSidebar({
   selectedConversationId,
   onSelectConversation,
-  onNewChat,
 }: ConversationSidebarProps) {
   const conversations = useQuery(api.conversations.getUserConversations);
 
@@ -61,33 +60,45 @@ export function ConversationSidebar({
 
   if (conversations.length === 0) {
     return (
-      <div className="flex h-full flex-col border-r bg-white">
+      <div className="flex h-full flex-col bg-white">
         <div className="border-b p-4">
-          <h2 className="text-lg font-semibold text-gray-900">Messages</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-gray-900">Messages</h2>
+            <Link
+              href="/users"
+              className="rounded-lg p-2 hover:bg-gray-100 transition-colors"
+              title="Start new chat"
+            >
+              <Plus className="h-5 w-5 text-gray-600" />
+            </Link>
+          </div>
         </div>
-        <div className="flex flex-1 items-center justify-center p-4">
-          <p className="text-center text-gray-600">
-            No conversations yet
-            <br />
-            <span className="text-sm">Start a chat from the users tab</span>
-          </p>
+        <div className="flex flex-1 flex-col items-center justify-center p-4 text-center">
+          <p className="text-gray-600 mb-4">No conversations yet</p>
+          <Link
+            href="/users"
+            className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
+          >
+            <Plus className="h-4 w-4" />
+            Start a new chat
+          </Link>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex h-full flex-col border-r bg-white">
+    <div className="flex h-full flex-col bg-white">
       <div className="border-b p-4">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-gray-900">Messages</h2>
-          <button
-            onClick={onNewChat}
+          <Link
+            href="/users"
             className="rounded-lg p-2 hover:bg-gray-100 transition-colors"
             title="Start new chat"
           >
             <Plus className="h-5 w-5 text-gray-600" />
-          </button>
+          </Link>
         </div>
       </div>
 

@@ -12,17 +12,16 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 interface UserListProps {
   currentUserId: string;
-  onConversationCreated?: () => void;
 }
 
-export function UserList({ currentUserId, onConversationCreated }: UserListProps) {
+export function UserList({ currentUserId }: UserListProps) {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [isCreatingConversation, setIsCreatingConversation] = useState(false);
 
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
-  const users = useQuery(api.users.getAllUsersExceptCurrent, { currentUserId });
+  const users = useQuery(api.users.getAllUsersExceptCurrentWithStatus, { currentUserId });
   const getOrCreateConversation = useMutation(api.conversations.getOrCreateConversation);
 
   const filteredAndSortedUsers = useMemo(() => {
@@ -36,15 +35,11 @@ export function UserList({ currentUserId, onConversationCreated }: UserListProps
     setIsCreatingConversation(true);
 
     try {
-      await getOrCreateConversation({
+      const conversationId = await getOrCreateConversation({
         participantIds: [currentUserId, userId],
       });
       
-      if (onConversationCreated) {
-        onConversationCreated();
-      } else {
-        router.push("/messages");
-      }
+      router.push(`/messages?conversationId=${conversationId}`);
     } catch (error) {
       console.error("Failed to create conversation:", error);
       alert("Failed to start conversation. Please try again.");

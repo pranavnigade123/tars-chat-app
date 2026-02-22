@@ -1,7 +1,7 @@
 "use client";
 
+import { AppHeader } from "@/components/features/navigation/AppHeader";
 import { UserProfile } from "@/components/features/auth/UserProfile";
-import { UserButton } from "@/components/features/auth/UserButton";
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
 import Link from "next/link";
 
@@ -10,15 +10,10 @@ export default function Home() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="border-b bg-white px-6 py-4">
-        <div className="mx-auto flex max-w-7xl items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-900">Tars Chat</h1>
-          <UserButton />
-        </div>
-      </header>
+      <AppHeader />
 
       <main className="flex flex-1 items-center justify-center bg-gray-50">
-        <div className="text-center">
+        <div className="text-center px-4">
           <h2 className="mb-4 text-3xl font-bold text-gray-900">
             Welcome to Tars Chat!
           </h2>
@@ -36,12 +31,20 @@ export default function Home() {
                 <p className="mb-4 text-sm text-gray-600">You are logged in as:</p>
                 <UserProfile showOnlineStatus size="lg" />
               </div>
-              <Link
-                href="/messages"
-                className="inline-block rounded-lg bg-blue-600 px-6 py-3 text-white font-medium hover:bg-blue-700 transition-colors"
-              >
-                Go to Messages
-              </Link>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <Link
+                  href="/messages"
+                  className="inline-block rounded-lg bg-blue-600 px-6 py-3 text-white font-medium hover:bg-blue-700 transition-colors"
+                >
+                  My Messages
+                </Link>
+                <Link
+                  href="/users"
+                  className="inline-block rounded-lg bg-white border-2 border-blue-600 px-6 py-3 text-blue-600 font-medium hover:bg-blue-50 transition-colors"
+                >
+                  Browse Users
+                </Link>
+              </div>
             </div>
           ) : (
             <p className="text-gray-600">Loading user data...</p>
