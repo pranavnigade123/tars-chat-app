@@ -7,9 +7,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { getInitials } from "@/lib/utils/getInitials";
 import { formatMessageTime } from "@/lib/utils/formatTimestamp";
 import { cn } from "@/lib/utils";
-import { useEffect, useRef } from "react";
 import type { Id } from "@/convex/_generated/dataModel";
 import { NoMessagesEmpty } from "@/components/features/empty-states";
+import { useAutoScroll } from "@/lib/hooks/useAutoScroll";
+import { NewMessagesButton } from "./NewMessagesButton";
 
 interface MessageFeedProps {
   conversationId: Id<"conversations">;
@@ -19,13 +20,12 @@ interface MessageFeedProps {
 export function MessageFeed({ conversationId, currentUserId }: MessageFeedProps) {
   const messages = useQuery(api.messages.getMessages, { conversationId });
   const conversation = useQuery(api.conversations.getConversationById, { conversationId });
-  const scrollRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (scrollRef.current && messages) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [messages]);
+  
+  const {
+    scrollContainerRef,
+    showNewMessagesButton,
+    scrollToBottom,
+  } = useAutoScroll(messages?.length ?? 0);
 
   if (messages === undefined) {
     return (
@@ -72,7 +72,7 @@ export function MessageFeed({ conversationId, currentUserId }: MessageFeedProps)
   }
 
   return (
-    <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4">
+    <div ref={scrollContainerRef} className="relative flex-1 overflow-y-auto p-4 space-y-4">
       {messages.map((message, index) => {
         const isCurrentUser = message.senderId === currentUserId;
         const showAvatar = index === 0 || messages[index - 1].senderId !== message.senderId;
@@ -127,6 +127,11 @@ export function MessageFeed({ conversationId, currentUserId }: MessageFeedProps)
           </div>
         );
       })}
+      
+      <NewMessagesButton
+        show={showNewMessagesButton}
+        onClick={() => scrollToBottom(true)}
+      />
     </div>
   );
 }
