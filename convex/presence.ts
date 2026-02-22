@@ -31,7 +31,9 @@ export const sendHeartbeat = mutation({
       .unique();
     
     if (!user) {
-      throw new Error("User not found");
+      // User not synced yet from webhook - this is expected on first login
+      // Return success to avoid error spam in console
+      return { success: false, reason: "User not synced yet" };
     }
     
     // Update user's presence
