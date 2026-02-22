@@ -123,10 +123,22 @@ export const getConversationById = query({
       return null;
     }
 
-    // Compute online status
-    const OFFLINE_THRESHOLD = 60 * 1000;
+    // Compute online status with better thresholds
+    const ACTIVE_NOW_THRESHOLD = 2 * 60 * 1000; // 2 minutes
+    const RECENTLY_ACTIVE_THRESHOLD = 5 * 60 * 1000; // 5 minutes
     const now = Date.now();
-    const isOnline = now - otherUser.lastSeen < OFFLINE_THRESHOLD;
+    const timeSinceLastSeen = now - otherUser.lastSeen;
+    
+    let statusText = "Offline";
+    let isOnline = false;
+    
+    if (timeSinceLastSeen < ACTIVE_NOW_THRESHOLD) {
+      statusText = "Active now";
+      isOnline = true;
+    } else if (timeSinceLastSeen < RECENTLY_ACTIVE_THRESHOLD) {
+      statusText = "Recently active";
+      isOnline = false;
+    }
 
     return {
       ...conversation,
@@ -136,6 +148,7 @@ export const getConversationById = query({
         name: otherUser.name,
         profileImage: otherUser.profileImage,
         isOnline: isOnline,
+        statusText: statusText,
       },
     };
   },
@@ -192,10 +205,22 @@ export const getUserConversations = query({
           .order("desc")
           .first();
 
-        // Compute online status based on lastSeen
-        const OFFLINE_THRESHOLD = 60 * 1000; // 60 seconds
+        // Compute online status based on lastSeen with better thresholds
+        const ACTIVE_NOW_THRESHOLD = 2 * 60 * 1000; // 2 minutes
+        const RECENTLY_ACTIVE_THRESHOLD = 5 * 60 * 1000; // 5 minutes
         const now = Date.now();
-        const isOnline = now - otherUser.lastSeen < OFFLINE_THRESHOLD;
+        const timeSinceLastSeen = now - otherUser.lastSeen;
+        
+        let statusText = "Offline";
+        let isOnline = false;
+        
+        if (timeSinceLastSeen < ACTIVE_NOW_THRESHOLD) {
+          statusText = "Active now";
+          isOnline = true;
+        } else if (timeSinceLastSeen < RECENTLY_ACTIVE_THRESHOLD) {
+          statusText = "Recently active";
+          isOnline = false;
+        }
 
         return {
           ...conversation,
@@ -205,6 +230,7 @@ export const getUserConversations = query({
             name: otherUser.name,
             profileImage: otherUser.profileImage,
             isOnline: isOnline,
+            statusText: statusText,
           },
           latestMessage: latestMessage
             ? {

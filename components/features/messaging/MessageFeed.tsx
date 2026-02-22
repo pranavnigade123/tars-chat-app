@@ -11,8 +11,9 @@ import type { Id } from "@/convex/_generated/dataModel";
 import { NoMessagesEmpty } from "@/components/features/empty-states";
 import { useAutoScroll } from "@/lib/hooks/useAutoScroll";
 import { NewMessagesButton } from "./NewMessagesButton";
-import { useState, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { Check, CheckCheck } from "lucide-react";
+import { useMessageVisibility } from "@/lib/hooks/useMessageVisibility";
 
 interface MessageFeedProps {
   conversationId: Id<"conversations">;
@@ -22,7 +23,7 @@ interface MessageFeedProps {
 export function MessageFeed({ conversationId, currentUserId }: MessageFeedProps) {
   const messages = useQuery(api.messages.getMessages, { conversationId });
   const conversation = useQuery(api.conversations.getConversationById, { conversationId });
-  const markMessagesAsRead = useMutation(api.messages.markMessagesAsRead);
+  const markMessageAsRead = useMutation(api.messages.markMessageAsRead);
   const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null);
   
   const {
@@ -31,14 +32,17 @@ export function MessageFeed({ conversationId, currentUserId }: MessageFeedProps)
     scrollToBottom,
   } = useAutoScroll(messages?.length ?? 0);
 
-  // Auto-mark messages as read when conversation is viewed
-  useEffect(() => {
-    if (messages && messages.length > 0) {
-      markMessagesAsRead({ conversationId }).catch((err) => {
-        console.error("Failed to mark messages as read:", err);
-      });
-    }
-  }, [conversationId, messages?.length, markMessagesAsRead]);
+  // Mark message as read when it becomes visible
+  const handleMessageVisible = useCallback((messageId: Id<"messages">) => {
+    markMessageAsRead({ messageId }).catch((err) => {
+      console.error("Failed to mark message as read:", err);
+    });
+  }, [markMessageAsRead]);
+
+  const { observeMessage } = useMessageVisibility({
+    onMessageVisible: handleMessageVisible,
+    threshold: 0.5,
+  });
 
   if (messages === undefined) {
     return (
@@ -111,6 +115,13 @@ export function MessageFeed({ conversationId, currentUserId }: MessageFeedProps)
         return (
           <div
             key={message._id}
+            ref={(el) => {
+              // Only observe messages from other users
+              if (!isCurrentUser && el) {
+                observeMessage(el);
+              }
+            }}
+            data-message-id={message._id}
             className={cn(
               "flex gap-2 group",
               isCurrentUser ? "flex-row-reverse" : "flex-row",

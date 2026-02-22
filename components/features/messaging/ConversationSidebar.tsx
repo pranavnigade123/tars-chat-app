@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "convex/react";
+import { useRouter } from "next/navigation";
 import { api } from "@/convex/_generated/api";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -16,7 +17,6 @@ import { TypingIndicator } from "./TypingIndicator";
 
 interface ConversationSidebarProps {
   selectedConversationId: Id<"conversations"> | null;
-  onSelectConversation: (conversationId: Id<"conversations">) => void;
 }
 
 interface ConversationItemProps {
@@ -34,10 +34,10 @@ interface ConversationItemProps {
     };
   };
   isSelected: boolean;
-  onSelect: () => void;
 }
 
-function ConversationItem({ conversation, isSelected, onSelect }: ConversationItemProps) {
+function ConversationItem({ conversation, isSelected }: ConversationItemProps) {
+  const router = useRouter();
   const typingUsers = useQuery(api.typingStates.getTypingState, {
     conversationId: conversation._id,
   });
@@ -48,11 +48,15 @@ function ConversationItem({ conversation, isSelected, onSelect }: ConversationIt
 
   const isTyping = typingUsers && typingUsers.length > 0;
   const isOnline = conversation.otherUser.isOnline;
-  const hasUnread = unreadCount && unreadCount > 0;
+  const hasUnread = typeof unreadCount === 'number' && unreadCount > 0;
+
+  const handleClick = () => {
+    router.push(`/messages?conversationId=${conversation._id}`);
+  };
 
   return (
     <button
-      onClick={onSelect}
+      onClick={handleClick}
       className={cn(
         "w-full flex items-center gap-3 p-3 transition-all duration-200 text-left relative group",
         isSelected 
@@ -103,17 +107,19 @@ function ConversationItem({ conversation, isSelected, onSelect }: ConversationIt
         
         <div className="flex items-center justify-between gap-2">
           <div className="flex-1 min-w-0">
-            {isTyping ? (
-              <TypingIndicator conversationId={conversation._id} variant="compact" />
-            ) : (
-              conversation.latestMessage && (
-                <p className={cn(
-                  "text-sm truncate",
-                  hasUnread ? "text-gray-900 font-semibold" : "text-gray-600"
-                )}>
-                  {truncateMessage(conversation.latestMessage.content, 50)}
-                </p>
-              )
+            {conversation.latestMessage && (
+              <p className={cn(
+                "text-sm truncate",
+                hasUnread ? "text-gray-900 font-semibold" : "text-gray-600"
+              )}>
+                {truncateMessage(conversation.latestMessage.content, 50)}
+              </p>
+            )}
+            {/* Show typing indicator below message preview */}
+            {isTyping && (
+              <div className="mt-0.5">
+                <TypingIndicator conversationId={conversation._id} variant="compact" />
+              </div>
             )}
           </div>
           
@@ -131,7 +137,6 @@ function ConversationItem({ conversation, isSelected, onSelect }: ConversationIt
 
 export function ConversationSidebar({
   selectedConversationId,
-  onSelectConversation,
 }: ConversationSidebarProps) {
   const conversations = useQuery(api.conversations.getUserConversations);
 
@@ -215,7 +220,6 @@ export function ConversationSidebar({
             key={conversation._id}
             conversation={conversation}
             isSelected={selectedConversationId === conversation._id}
-            onSelect={() => onSelectConversation(conversation._id)}
           />
         ))}
       </div>

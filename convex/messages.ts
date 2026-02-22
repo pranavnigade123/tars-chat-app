@@ -178,6 +178,49 @@ export const markMessagesAsRead = mutation({
 });
 
 /**
+ * Mark a single message as read by the current user
+ * Used when message becomes visible in viewport
+ */
+export const markMessageAsRead = mutation({
+  args: {
+    messageId: v.id("messages"),
+  },
+  handler: async (ctx, args) => {
+    // Get authenticated user
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return { success: false };
+    }
+
+    // Get message
+    const message = await ctx.db.get(args.messageId);
+    if (!message) {
+      return { success: false };
+    }
+
+    // Skip if current user is sender
+    if (message.senderId === identity.subject) {
+      return { success: false };
+    }
+
+    // Handle migration: readBy might be undefined for old messages
+    const readBy = message.readBy || [];
+    
+    // Skip if already read by current user
+    if (readBy.includes(identity.subject)) {
+      return { success: false, alreadyRead: true };
+    }
+
+    // Add current user to readBy array
+    await ctx.db.patch(args.messageId, {
+      readBy: [...readBy, identity.subject],
+    });
+
+    return { success: true };
+  },
+});
+
+/**
  * Get unread message count for a conversation
  * Returns count of messages not read by current user
  */

@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useUser } from "@clerk/nextjs";
-import { redirect, useSearchParams } from "next/navigation";
+import { redirect, useSearchParams, useRouter } from "next/navigation";
 import { AppHeader } from "@/components/features/navigation/AppHeader";
 import { ConversationSidebar } from "@/components/features/messaging/ConversationSidebar";
 import { MessageFeed } from "@/components/features/messaging/MessageFeed";
@@ -15,31 +15,8 @@ import type { Id } from "@/convex/_generated/dataModel";
 export default function MessagesPage() {
   const { user, isLoaded } = useUser();
   const searchParams = useSearchParams();
-  const conversationIdFromUrl = searchParams.get("conversationId");
-  
-  const [selectedConversationId, setSelectedConversationId] = useState<Id<"conversations"> | null>(null);
-  const [showMobileChat, setShowMobileChat] = useState(false);
-
-  // Set conversation from URL parameter
-  useEffect(() => {
-    if (conversationIdFromUrl) {
-      setSelectedConversationId(conversationIdFromUrl as Id<"conversations">);
-      setShowMobileChat(true);
-    }
-  }, [conversationIdFromUrl]);
-
-  // Keyboard navigation: Escape key to go back on mobile
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && showMobileChat && window.innerWidth < 1024) {
-        setShowMobileChat(false);
-        setSelectedConversationId(null);
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [showMobileChat]);
+  const router = useRouter();
+  const conversationId = searchParams.get("conversationId") as Id<"conversations"> | null;
 
   // Handle redirect after all hooks
   useEffect(() => {
@@ -56,45 +33,39 @@ export default function MessagesPage() {
     );
   }
 
-  const handleSelectConversation = (id: Id<"conversations">) => {
-    setSelectedConversationId(id);
-    setShowMobileChat(true);
-  };
-
   const handleBackToSidebar = () => {
-    setShowMobileChat(false);
-    setSelectedConversationId(null);
+    router.push("/messages");
   };
 
   return (
     <div className="flex h-screen flex-col">
       <AppHeader />
       
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden relative">
+        {/* Sidebar - slides in/out on mobile using transform */}
         <aside 
           className={cn(
-            "w-full lg:w-80 xl:w-96 flex flex-col border-r bg-white transition-all duration-300",
-            showMobileChat && "hidden lg:flex"
+            "w-full lg:w-80 xl:w-96 flex flex-col border-r bg-white absolute lg:relative h-full z-10 lg:z-0 transition-transform duration-300",
+            conversationId ? "-translate-x-full lg:translate-x-0" : "translate-x-0"
           )}
           role="complementary"
           aria-label="Conversations sidebar"
         >
           <ConversationSidebar
-            selectedConversationId={selectedConversationId}
-            onSelectConversation={handleSelectConversation}
+            selectedConversationId={conversationId}
           />
         </aside>
 
+        {/* Main chat area - always rendered, slides in/out on mobile */}
         <main 
           className={cn(
-            "flex-1 flex flex-col transition-all duration-300",
-            !showMobileChat && "hidden lg:flex",
-            showMobileChat && "flex"
+            "flex-1 flex flex-col absolute lg:relative h-full w-full lg:w-auto transition-transform duration-300",
+            conversationId ? "translate-x-0" : "translate-x-full lg:translate-x-0"
           )}
           role="main"
           aria-label="Chat area"
         >
-          {selectedConversationId ? (
+          {conversationId ? (
             <>
               <div className="lg:hidden flex items-center gap-3 border-b bg-white px-4 py-3">
                 <button
@@ -108,11 +79,11 @@ export default function MessagesPage() {
               </div>
               
               <MessageFeed
-                conversationId={selectedConversationId}
+                conversationId={conversationId}
                 currentUserId={user.id}
               />
-              <TypingIndicator conversationId={selectedConversationId} />
-              <MessageInput conversationId={selectedConversationId} />
+              <TypingIndicator conversationId={conversationId} />
+              <MessageInput conversationId={conversationId} />
             </>
           ) : (
             <div className="flex flex-1 items-center justify-center bg-gray-50">
