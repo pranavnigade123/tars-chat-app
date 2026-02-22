@@ -22,4 +22,14 @@ export default defineSchema({
   })
     .index("by_conversation_id", ["conversationId"])
     .index("by_participants", ["participants"]),
+  
+  messages: defineTable({
+    conversationId: v.id("conversations"),
+    senderId: v.string(),
+    content: v.string(),
+    sentAt: v.number(),
+    isDeleted: v.boolean(),
+  })
+    .index("by_conversation_and_time", ["conversationId", "sentAt"])
+    .index("by_sender", ["senderId"]),
 });

@@ -1,4 +1,4 @@
-import { mutation } from "./_generated/server";
+import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 
 /**
@@ -76,5 +76,90 @@ export const getOrCreateConversation = mutation({
 
       throw error;
     }
+  },
+});
+
+
+/**
+ * Get all conversations for the current user
+ * Returns conversations with participant info and latest message preview
+ */
+export const getUserConversations = query({
+  args: {},
+  handler: async (ctx) => {
+    // Get authenticated user
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    // Get all conversations where user is a participant
+    const allConversations = await ctx.db.query("conversations").collect();
+    
+    const conversations = allConversations.filter((conv) =>
+      conv.participants.includes(identity.subject)
+    );
+
+    // Enrich conversations with participant info and latest message
+    const enrichedConversations = await Promise.all(
+      conversations.map(async (conversation) => {
+        // Get the other participant
+        const otherParticipantId = conversation.participants.find(
+          (id) => id !== identity.subject
+        );
+
+        if (!otherParticipantId) {
+          return null;
+        }
+
+        // Get other participant's user info
+        const otherUser = await ctx.db
+          .query("users")
+          .withIndex("by_clerk_id", (q) => q.eq("clerkId", otherParticipantId))
+          .unique();
+
+        if (!otherUser) {
+          return null;
+        }
+
+        // Get latest message for this conversation
+        const latestMessage = await ctx.db
+          .query("messages")
+          .withIndex("by_conversation_and_time", (q) =>
+            q.eq("conversationId", conversation._id)
+          )
+          .order("desc")
+          .first();
+
+        return {
+          ...conversation,
+          otherUser: {
+            _id: otherUser._id,
+            clerkId: otherUser.clerkId,
+            name: otherUser.name,
+            profileImage: otherUser.profileImage,
+            onlineStatus: otherUser.onlineStatus,
+          },
+          latestMessage: latestMessage
+            ? {
+                content: latestMessage.content,
+                sentAt: latestMessage.sentAt,
+                senderId: latestMessage.senderId,
+              }
+            : null,
+        };
+      })
+    );
+
+    // Filter out null values and sort by lastMessageAt
+    const validConversations = enrichedConversations.filter(
+      (conv) => conv !== null
+    );
+
+    return validConversations.sort((a, b) => {
+      const aTime = a.lastMessageAt || a.createdAt;
+      const bTime = b.lastMessageAt || b.createdAt;
+      return bTime - aTime;
+    });
   },
 });
