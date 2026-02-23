@@ -65,26 +65,26 @@ export function TypingIndicator({ conversationId, variant = "full" }: TypingIndi
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -10 }}
       transition={{ duration: 0.2 }}
-      className="px-4 pb-1"
+      className="px-4"
     >
       <div className="flex gap-3">
         {/* Empty space for alignment (where avatar would be) */}
         <div className="w-0 shrink-0" />
         
-        {/* Small typing bubble */}
+        {/* Smaller typing bubble */}
         <motion.div
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.2, ease: "easeOut" }}
-          className="inline-block px-3 py-2 bg-blue-50 rounded-2xl rounded-tl-md border border-blue-100"
+          className="inline-block px-2 py-1.5 bg-blue-50 rounded-xl rounded-tl-sm border border-blue-100"
         >
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-0.5">
             {/* Smaller animated dots */}
             {[0, 1, 2].map((i) => (
               <motion.span
                 key={i}
-                className="w-1.5 h-1.5 bg-blue-500 rounded-full"
-                animate={{ y: [0, -4, 0] }}
+                className="w-1 h-1 bg-blue-500 rounded-full"
+                animate={{ y: [0, -3, 0] }}
                 transition={{
                   duration: 0.6,
                   repeat: Infinity,

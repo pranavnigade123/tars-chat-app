@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/utils/getInitials";
 import { formatMessageTime } from "@/lib/utils/formatTimestamp";
@@ -39,18 +39,34 @@ export function MessageBubble({
   messageId,
 }: MessageBubbleProps) {
   const [isHovered, setIsHovered] = useState(false);
-  const [showNewBadge, setShowNewBadge] = useState(isUnread);
+  const [showNewBadge, setShowNewBadge] = useState(false);
 
-  // Hide NEW badge after 2 seconds
+  // Determine if badge should be shown (only for unread messages from other users)
+  const shouldShowBadge = useMemo(() => {
+    return isUnread && !isCurrentUser;
+  }, [isUnread, isCurrentUser]);
+
+  // Show NEW badge only once per message (track in localStorage)
   useEffect(() => {
-    if (isUnread) {
+    if (!shouldShowBadge) {
+      setShowNewBadge(false);
+      return;
+    }
+    
+    const badgeShownKey = `badge_shown_${messageId}`;
+    const hasShownBadge = localStorage.getItem(badgeShownKey);
+    
+    if (!hasShownBadge) {
       setShowNewBadge(true);
+      localStorage.setItem(badgeShownKey, 'true');
+      
       const timer = setTimeout(() => {
         setShowNewBadge(false);
       }, 2000);
+      
       return () => clearTimeout(timer);
     }
-  }, [isUnread, messageId]);
+  }, [shouldShowBadge, messageId]);
 
   return (
     <div
@@ -94,8 +110,6 @@ export function MessageBubble({
               "px-3 py-2 rounded-2xl transition-all duration-200 inline-block",
               isCurrentUser
                 ? "bg-blue-600 text-white"
-                : isUnread
-                ? "bg-blue-50 text-gray-900 ring-1 ring-blue-200"
                 : "bg-gray-100 text-gray-900",
               // Rounded corners based on grouping
               isCurrentUser ? (

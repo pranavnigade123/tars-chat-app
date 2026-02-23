@@ -76,16 +76,16 @@ function MessagesPageContent() {
     }
   }, [isLoaded, user]);
 
-  // Bulk mark messages as read
+  // Bulk mark messages as read when conversation opens or new messages arrive
   useEffect(() => {
-    if (conversationId) {
+    if (conversationId && messages) {
       const timeoutId = setTimeout(() => {
         markMessagesAsRead({ conversationId })
           .catch((err) => console.error("Failed to mark messages as read:", err));
       }, 300); // Reduced from 1000ms to 300ms
       return () => clearTimeout(timeoutId);
     }
-  }, [conversationId, markMessagesAsRead]);
+  }, [conversationId, messages?.length, markMessagesAsRead]);
 
   if (!isLoaded || !user) {
     return (
@@ -167,7 +167,7 @@ function MessagesPageContent() {
 
         {/* Chat Screen */}
         {conversationId && (
-          <div className="flex flex-col h-full lg:flex-1 lg:bg-gray-50">
+          <div className="flex flex-col h-full lg:flex-1 lg:bg-gray-50 relative">
             <ChatHeader
               name={conversation?.otherUser?.name || "Loading..."}
               profileImage={conversation?.otherUser?.profileImage}
@@ -179,7 +179,7 @@ function MessagesPageContent() {
             {/* Messages - with proper mobile padding for fixed input */}
             <div
               ref={scrollContainerRef}
-              className="flex-1 overflow-y-auto px-4 py-4 bg-white pb-[calc(env(safe-area-inset-bottom)+100px)] lg:pb-4"
+              className="flex-1 overflow-y-auto px-4 py-4 bg-white pb-[calc(env(safe-area-inset-bottom)+90px)] lg:pb-4"
             >
               {messages === undefined ? (
                 <div className="space-y-4">
@@ -248,7 +248,7 @@ function MessagesPageContent() {
             </div>
 
             {/* Typing Indicator - Fixed position above input */}
-            <div className="absolute bottom-[calc(env(safe-area-inset-bottom)+80px)] left-0 right-0 lg:bottom-20 pointer-events-none">
+            <div className="absolute bottom-[calc(env(safe-area-inset-bottom)+68px)] left-0 right-0 lg:bottom-[68px] pointer-events-none z-10">
               <TypingIndicator conversationId={conversationId} />
             </div>
 
