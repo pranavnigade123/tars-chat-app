@@ -3,10 +3,10 @@ import { internal } from "./_generated/api";
 
 const crons = cronJobs();
 
-// Cleanup expired typing states every 5 minutes
+// Cleanup expired typing states every 1 minute
 crons.interval(
   "cleanup-typing-states",
-  { minutes: 5 },
+  { minutes: 1 },
   internal.typingStates.cleanupExpiredTypingStates
 );
 

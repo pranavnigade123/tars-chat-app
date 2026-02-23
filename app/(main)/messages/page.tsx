@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useUser } from "@clerk/nextjs";
 import { redirect, useSearchParams, useRouter } from "next/navigation";
+import { useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
 import { AppHeader } from "@/components/features/navigation/AppHeader";
 import { ConversationSidebar } from "@/components/features/messaging/ConversationSidebar";
 import { MessageFeed } from "@/components/features/messaging/MessageFeed";
@@ -17,6 +19,8 @@ export default function MessagesPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const conversationId = searchParams.get("conversationId") as Id<"conversations"> | null;
+  const markMessagesAsRead = useMutation(api.messages.markMessagesAsRead);
+  const scrollToBottomRef = useRef<(() => void) | null>(null);
 
   // Handle redirect after all hooks
   useEffect(() => {
@@ -24,6 +28,19 @@ export default function MessagesPage() {
       redirect("/sign-in");
     }
   }, [isLoaded, user]);
+
+  // Bulk mark messages as read when conversation opens
+  useEffect(() => {
+    if (conversationId) {
+      // Delay to ensure user has actually seen the conversation
+      const timeoutId = setTimeout(() => {
+        markMessagesAsRead({ conversationId })
+          .catch((err) => console.error("Failed to mark messages as read:", err));
+      }, 1000); // 1 second delay
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [conversationId, markMessagesAsRead]);
 
   if (!isLoaded || !user) {
     return (
@@ -35,6 +52,13 @@ export default function MessagesPage() {
 
   const handleBackToSidebar = () => {
     router.push("/messages");
+  };
+
+  const handleMessageSent = () => {
+    // Scroll to bottom when user sends a message
+    if (scrollToBottomRef.current) {
+      scrollToBottomRef.current();
+    }
   };
 
   return (
@@ -81,9 +105,13 @@ export default function MessagesPage() {
               <MessageFeed
                 conversationId={conversationId}
                 currentUserId={user.id}
+                scrollToBottomRef={scrollToBottomRef}
               />
               <TypingIndicator conversationId={conversationId} />
-              <MessageInput conversationId={conversationId} />
+              <MessageInput 
+                conversationId={conversationId}
+                onMessageSent={handleMessageSent}
+              />
             </>
           ) : (
             <div className="flex flex-1 items-center justify-center bg-gray-50">

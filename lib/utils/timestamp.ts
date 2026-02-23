@@ -32,24 +32,20 @@ function parseTimestamp(timestamp: TimestampInput): Date | null {
  */
 function isToday(date: Date): boolean {
   const now = new Date();
-  return (
-    date.getDate() === now.getDate() &&
-    date.getMonth() === now.getMonth() &&
-    date.getFullYear() === now.getFullYear()
-  );
+  // Normalize to start of day for accurate comparison
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const dateStart = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  return todayStart.getTime() === dateStart.getTime();
 }
 
 /**
  * Check if a date is yesterday in user's timezone
  */
 function isYesterday(date: Date): boolean {
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
-  return (
-    date.getDate() === yesterday.getDate() &&
-    date.getMonth() === yesterday.getMonth() &&
-    date.getFullYear() === yesterday.getFullYear()
-  );
+  const now = new Date();
+  const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+  const dateStart = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  return yesterday.getTime() === dateStart.getTime();
 }
 
 /**

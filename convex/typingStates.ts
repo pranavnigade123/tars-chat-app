@@ -1,7 +1,7 @@
 import { mutation, query, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 
-const TYPING_TIMEOUT = 2000; // 2 seconds in milliseconds
+const TYPING_TIMEOUT = 3000; // 3 seconds in milliseconds
 const CLEANUP_AGE = 5 * 60 * 1000; // 5 minutes in milliseconds
 
 /**

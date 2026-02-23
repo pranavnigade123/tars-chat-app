@@ -5,6 +5,7 @@ const SCROLL_THRESHOLD = 100; // pixels from bottom
 interface UseAutoScrollOptions {
   enabled?: boolean;
   threshold?: number;
+  conversationId?: string | null;
 }
 
 interface UseAutoScrollReturn {
@@ -23,7 +24,7 @@ export function useAutoScroll(
   messageCount: number,
   options: UseAutoScrollOptions = {}
 ): UseAutoScrollReturn {
-  const { enabled = true, threshold = SCROLL_THRESHOLD } = options;
+  const { enabled = true, threshold = SCROLL_THRESHOLD, conversationId } = options;
   
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [isAtBottom, setIsAtBottom] = useState(true);
@@ -85,6 +86,18 @@ export function useAutoScroll(
       scrollToBottom(false);
     }
   }, []); // Only on mount
+
+  // Reset scroll state when conversation changes
+  useEffect(() => {
+    setIsAtBottom(true);
+    setShowNewMessagesButton(false);
+    previousMessageCountRef.current = 0;
+    
+    // Scroll to bottom on conversation change
+    if (messageCount > 0) {
+      setTimeout(() => scrollToBottom(false), 100);
+    }
+  }, [conversationId, messageCount, scrollToBottom]);
 
   // Auto-scroll on new messages
   useEffect(() => {

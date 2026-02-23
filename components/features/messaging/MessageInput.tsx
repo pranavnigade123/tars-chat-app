@@ -10,14 +10,17 @@ import { cn } from "@/lib/utils";
 
 interface MessageInputProps {
   conversationId: Id<"conversations">;
+  onMessageSent?: () => void;
 }
 
-export function MessageInput({ conversationId }: MessageInputProps) {
+export function MessageInput({ conversationId, onMessageSent }: MessageInputProps) {
   const [content, setContent] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [failedMessage, setFailedMessage] = useState<string | null>(null);
   const [isFocused, setIsFocused] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   const sendMessage = useMutation(api.messages.sendMessage);
   const setTypingState = useMutation(api.typingStates.setTypingState);
@@ -41,12 +44,83 @@ export function MessageInput({ conversationId }: MessageInputProps) {
 
   const debouncedTyping = useDebounce(debouncedSetTyping, 300);
 
-  // Cleanup on unmount
+  // Clear typing state after 3 seconds of inactivity
+  const handleTyping = useCallback(() => {
+    // Clear existing timeout
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+
+    // Set typing state
+    debouncedTyping();
+
+    // Set new timeout to clear typing state after 3 seconds
+    typingTimeoutRef.current = setTimeout(() => {
+      clearTypingState({ conversationId }).catch(() => {});
+    }, 3000);
+  }, [conversationId, clearTypingState, debouncedTyping]);
+
+  // Cleanup on unmount or conversation change
   useEffect(() => {
     return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
       clearTypingState({ conversationId }).catch(() => {});
     };
   }, [conversationId, clearTypingState]);
+
+  // Load draft message from localStorage when conversation changes
+  useEffect(() => {
+    if (!conversationId) return;
+    
+    const draftKey = `draft_${conversationId}`;
+    const draftTimestampKey = `draft_timestamp_${conversationId}`;
+    const savedDraft = localStorage.getItem(draftKey);
+    const savedTimestamp = localStorage.getItem(draftTimestampKey);
+    
+    if (savedDraft && savedTimestamp) {
+      const draftAge = Date.now() - parseInt(savedTimestamp, 10);
+      const DRAFT_EXPIRY = 5 * 60 * 1000; // 5 minutes in milliseconds
+      
+      if (draftAge < DRAFT_EXPIRY) {
+        // Draft is still valid
+        setContent(savedDraft);
+      } else {
+        // Draft expired, clear it
+        localStorage.removeItem(draftKey);
+        localStorage.removeItem(draftTimestampKey);
+        setContent("");
+      }
+    } else {
+      setContent("");
+    }
+    
+    // Clear error and failed message when switching conversations
+    setError(null);
+    setFailedMessage(null);
+  }, [conversationId]);
+
+  // Save draft to localStorage when content changes (debounced)
+  useEffect(() => {
+    if (!conversationId) return;
+    
+    const draftKey = `draft_${conversationId}`;
+    const draftTimestampKey = `draft_timestamp_${conversationId}`;
+    
+    // Debounce the save to avoid too many localStorage writes
+    const timeoutId = setTimeout(() => {
+      if (content.trim()) {
+        localStorage.setItem(draftKey, content);
+        localStorage.setItem(draftTimestampKey, Date.now().toString());
+      } else {
+        localStorage.removeItem(draftKey);
+        localStorage.removeItem(draftTimestampKey);
+      }
+    }, 500); // 500ms debounce
+    
+    return () => clearTimeout(timeoutId);
+  }, [content, conversationId]);
 
   const handleSend = async () => {
     const trimmedContent = content.trim();
@@ -67,12 +141,34 @@ export function MessageInput({ conversationId }: MessageInputProps) {
       });
 
       setContent("");
+      setFailedMessage(null);
+      
+      // Clear draft from localStorage
+      const draftKey = `draft_${conversationId}`;
+      const draftTimestampKey = `draft_timestamp_${conversationId}`;
+      localStorage.removeItem(draftKey);
+      localStorage.removeItem(draftTimestampKey);
+      
       textareaRef.current?.focus();
+      
+      // Trigger scroll to bottom after sending
+      onMessageSent?.();
     } catch (err) {
       console.error("Failed to send message:", err);
-      setError("Failed to send message. Please try again.");
+      setError("Failed to send message.");
+      setFailedMessage(trimmedContent); // Save for retry
     } finally {
       setIsSending(false);
+    }
+  };
+
+  const handleRetry = () => {
+    if (failedMessage) {
+      setContent(failedMessage);
+      setFailedMessage(null);
+      setError(null);
+      // Auto-send after setting content
+      setTimeout(() => handleSend(), 100);
     }
   };
 
@@ -83,12 +179,32 @@ export function MessageInput({ conversationId }: MessageInputProps) {
     }
   };
 
+  const handleBlur = () => {
+    setIsFocused(false);
+    // Clear typing timeout
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+    // Clear typing state when input loses focus
+    clearTypingState({ conversationId }).catch(() => {});
+  };
+
   return (
     <div className="border-t bg-white px-4 py-3 shadow-sm">
       {error && (
-        <div className="mb-3 rounded-xl bg-red-50 border border-red-200 p-3 text-sm text-red-600 flex items-center gap-2">
-          <span className="text-red-500">⚠</span>
-          {error}
+        <div className="mb-3 rounded-xl bg-red-50 border border-red-200 p-3 text-sm text-red-600 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-red-500">⚠</span>
+            {error}
+          </div>
+          {failedMessage && (
+            <button
+              onClick={handleRetry}
+              className="text-blue-600 hover:text-blue-700 font-medium transition-colors"
+            >
+              Retry
+            </button>
+          )}
         </div>
       )}
       
@@ -111,11 +227,11 @@ export function MessageInput({ conversationId }: MessageInputProps) {
           value={content}
           onChange={(e) => {
             setContent(e.target.value);
-            debouncedTyping();
+            handleTyping();
           }}
           onKeyDown={handleKeyDown}
           onFocus={() => setIsFocused(true)}
-          onBlur={() => setIsFocused(false)}
+          onBlur={handleBlur}
           placeholder="Type a message..."
           disabled={isSending}
           rows={1}

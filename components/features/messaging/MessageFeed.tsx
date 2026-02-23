@@ -18,9 +18,10 @@ import { useMessageVisibility } from "@/lib/hooks/useMessageVisibility";
 interface MessageFeedProps {
   conversationId: Id<"conversations">;
   currentUserId: string;
+  scrollToBottomRef?: React.MutableRefObject<(() => void) | null>;
 }
 
-export function MessageFeed({ conversationId, currentUserId }: MessageFeedProps) {
+export function MessageFeed({ conversationId, currentUserId, scrollToBottomRef }: MessageFeedProps) {
   const messages = useQuery(api.messages.getMessages, { conversationId });
   const conversation = useQuery(api.conversations.getConversationById, { conversationId });
   const markMessageAsRead = useMutation(api.messages.markMessageAsRead);
@@ -30,7 +31,14 @@ export function MessageFeed({ conversationId, currentUserId }: MessageFeedProps)
     scrollContainerRef,
     showNewMessagesButton,
     scrollToBottom,
-  } = useAutoScroll(messages?.length ?? 0);
+  } = useAutoScroll(messages?.length ?? 0, {
+    conversationId: conversationId,
+  });
+
+  // Expose scrollToBottom to parent via ref
+  if (scrollToBottomRef) {
+    scrollToBottomRef.current = () => scrollToBottom(true);
+  }
 
   // Mark message as read when it becomes visible
   const handleMessageVisible = useCallback((messageId: Id<"messages">) => {
