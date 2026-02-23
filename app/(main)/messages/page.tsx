@@ -178,7 +178,7 @@ function MessagesPageContent() {
             {/* Messages - with proper mobile padding for fixed input */}
             <div
               ref={scrollContainerRef}
-              className="flex-1 overflow-y-auto px-4 py-4 bg-white pb-[calc(env(safe-area-inset-bottom)+80px)] lg:pb-4"
+              className="flex-1 overflow-y-auto px-4 py-4 bg-white pb-[calc(env(safe-area-inset-bottom)+70px)] lg:pb-4"
             >
               {messages === undefined ? (
                 <div className="space-y-4">
