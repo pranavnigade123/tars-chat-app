@@ -1,15 +1,18 @@
 "use client";
 
 import { useUser } from "@clerk/nextjs";
-import { redirect } from "next/navigation";
+import { redirect, usePathname } from "next/navigation";
 import { UserButton } from "@clerk/nextjs";
 import { BottomNav } from "@/components/features/navigation/BottomNav";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/utils/getInitials";
-import { Mail, User as UserIcon } from "lucide-react";
+import { Mail, User as UserIcon, MessageSquare, Users } from "lucide-react";
+import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 export default function ProfilePage() {
   const { user, isLoaded } = useUser();
+  const pathname = usePathname();
 
   if (isLoaded && !user) {
     redirect("/sign-in");
@@ -25,22 +28,64 @@ export default function ProfilePage() {
 
   return (
     <>
-      <div className="flex h-dvh flex-col bg-white overflow-hidden">
-        {/* Header */}
-        <header className="sticky top-0 z-10 bg-white border-b border-gray-200">
-          <div className="flex items-center justify-between px-4 py-3">
-            <h1 className="text-xl font-semibold text-gray-900">Profile</h1>
-            <UserButton 
-              appearance={{
-                elements: {
-                  avatarBox: "w-9 h-9"
-                }
-              }}
-            />
-          </div>
-        </header>
-        
-        <main className="flex-1 overflow-y-auto pb-20 lg:pb-0">
+      <div className="flex h-dvh bg-white overflow-hidden">
+        {/* Desktop Vertical Sidebar Navigation - Hidden on Mobile */}
+        <div className="hidden lg:flex lg:flex-col lg:w-16 lg:border-r lg:border-gray-200 lg:bg-gray-50 lg:items-center lg:py-4 lg:gap-2">
+          <Link
+            href="/messages"
+            className={cn(
+              "flex flex-col items-center justify-center w-12 h-12 rounded-xl transition-colors gap-1",
+              pathname.startsWith("/messages")
+                ? "bg-blue-100 text-blue-600"
+                : "text-gray-600 hover:bg-gray-100"
+            )}
+          >
+            <MessageSquare className="h-5 w-5" />
+            <span className="text-[10px] font-medium">Chats</span>
+          </Link>
+          <Link
+            href="/users"
+            className={cn(
+              "flex flex-col items-center justify-center w-12 h-12 rounded-xl transition-colors gap-1",
+              pathname === "/users"
+                ? "bg-blue-100 text-blue-600"
+                : "text-gray-600 hover:bg-gray-100"
+            )}
+          >
+            <Users className="h-5 w-5" />
+            <span className="text-[10px] font-medium">People</span>
+          </Link>
+          <Link
+            href="/profile"
+            className={cn(
+              "flex flex-col items-center justify-center w-12 h-12 rounded-xl transition-colors gap-1 mt-auto",
+              pathname === "/profile"
+                ? "bg-blue-100 text-blue-600"
+                : "text-gray-600 hover:bg-gray-100"
+            )}
+          >
+            <UserIcon className="h-5 w-5" />
+            <span className="text-[10px] font-medium">Profile</span>
+          </Link>
+        </div>
+
+        {/* Main Content */}
+        <div className="flex flex-col flex-1 overflow-hidden">
+          {/* Header */}
+          <header className="sticky top-0 z-10 bg-white border-b border-gray-200">
+            <div className="flex items-center justify-between px-4 py-3">
+              <h1 className="text-xl font-semibold text-gray-900">Profile</h1>
+              <UserButton 
+                appearance={{
+                  elements: {
+                    avatarBox: "w-9 h-9"
+                  }
+                }}
+              />
+            </div>
+          </header>
+          
+          <main className="flex-1 overflow-y-auto pb-20 lg:pb-0">
           <div className="max-w-2xl mx-auto p-6">
             {/* Profile Card */}
             <div className="bg-white rounded-2xl border border-gray-200 p-8 mb-6">
@@ -113,6 +158,7 @@ export default function ProfilePage() {
             </div>
           </div>
         </main>
+        </div>
       </div>
 
       {/* Bottom Navigation - Mobile Only */}
