@@ -169,9 +169,9 @@ export function MessageInputRedesigned({ conversationId, onMessageSent }: Messag
   };
 
   return (
-    <div className="p-4 bg-white border-t border-gray-100">
+    <div className="p-3 lg:p-4 bg-white border-t border-gray-100">
       {error && (
-        <div className="mb-3 rounded-xl bg-red-50 border border-red-100 p-3 text-sm text-red-700 flex items-center justify-between">
+        <div className="mb-2 lg:mb-3 rounded-xl bg-red-50 border border-red-100 p-2.5 lg:p-3 text-sm text-red-700 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span>⚠</span>
             <span>{error}</span>
@@ -189,7 +189,7 @@ export function MessageInputRedesigned({ conversationId, onMessageSent }: Messag
       
       <div 
         className={cn(
-          "flex items-end gap-2 rounded-2xl bg-gray-50 px-4 py-3 transition-all duration-200",
+          "flex items-end gap-2 rounded-2xl bg-gray-50 px-3 py-2 lg:px-4 lg:py-3 transition-all duration-200",
           isFocused && "bg-white ring-2 ring-blue-500 shadow-sm"
         )}
       >
@@ -206,14 +206,14 @@ export function MessageInputRedesigned({ conversationId, onMessageSent }: Messag
           placeholder="Message..."
           disabled={isSending}
           rows={1}
-          className="flex-1 resize-none bg-transparent text-gray-900 placeholder:text-gray-400 focus:outline-none disabled:cursor-not-allowed max-h-[120px] text-[15px]"
+          className="flex-1 resize-none bg-transparent text-gray-900 placeholder:text-gray-400 focus:outline-none disabled:cursor-not-allowed max-h-[120px] text-base lg:text-[15px]"
         />
         
         <button
           onClick={handleSend}
           disabled={isSending || !content.trim()}
           className={cn(
-            "flex h-9 w-9 items-center justify-center rounded-full transition-all duration-200 shrink-0",
+            "flex h-8 w-8 lg:h-9 lg:w-9 items-center justify-center rounded-full transition-all duration-200 shrink-0",
             content.trim() && !isSending
               ? "bg-blue-600 text-white hover:bg-blue-700 active:scale-95"
               : "bg-gray-200 text-gray-400 cursor-not-allowed"
