@@ -20,7 +20,7 @@ import { useMessageVisibility } from "@/lib/hooks/useMessageVisibility";
 import { getDateLabel, isDifferentDay } from "@/lib/utils/timestamp";
 import { cn } from "@/lib/utils";
 import type { Id } from "@/convex/_generated/dataModel";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import Link from "next/link";
 import { MessageSquare, Users, User } from "lucide-react";
 
@@ -32,7 +32,10 @@ function MessagesPageContent() {
   const conversationId = searchParams.get("conversationId") as Id<"conversations"> | null;
   const markMessagesAsRead = useMutation(api.messages.markMessagesAsRead);
   const markMessageAsRead = useMutation(api.messages.markMessageAsRead);
+  const deleteMessage = useMutation(api.messages.deleteMessage);
   const scrollToBottomRef = useRef<(() => void) | null>(null);
+  const [isSelectMode, setIsSelectMode] = useState(false);
+  const [selectedMessages, setSelectedMessages] = useState<Set<Id<"messages">>>(new Set());
 
   // Fetch data
   const messages = useQuery(
@@ -106,6 +109,43 @@ function MessagesPageContent() {
     }
   };
 
+  const handleToggleSelectMode = () => {
+    setIsSelectMode(!isSelectMode);
+    setSelectedMessages(new Set());
+  };
+
+  const handleToggleMessageSelect = (messageId: Id<"messages">) => {
+    setSelectedMessages(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(messageId)) {
+        newSet.delete(messageId);
+      } else {
+        newSet.add(messageId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedMessages.size === 0) return;
+    
+    const confirmed = window.confirm(`Delete ${selectedMessages.size} message${selectedMessages.size > 1 ? 's' : ''}?`);
+    if (!confirmed) return;
+
+    try {
+      await Promise.all(
+        Array.from(selectedMessages).map(messageId => 
+          deleteMessage({ messageId })
+        )
+      );
+      setSelectedMessages(new Set());
+      setIsSelectMode(false);
+    } catch (error) {
+      console.error("Failed to delete messages:", error);
+      alert("Failed to delete some messages. Please try again.");
+    }
+  };
+
   // Mobile-first layout: Stack screens, show one at a time
   // Desktop: Vertical sidebar nav + conversation list + chat
   return (
@@ -175,6 +215,10 @@ function MessagesPageContent() {
               status={conversation?.otherUser?.statusText || ""}
               isOnline={conversation?.otherUser?.isOnline || false}
               onBack={handleBackToList}
+              onToggleSelectMode={handleToggleSelectMode}
+              isSelectMode={isSelectMode}
+              selectedCount={selectedMessages.size}
+              onBulkDelete={handleBulkDelete}
             />
 
             {/* Messages - with proper mobile padding for fixed input */}
@@ -215,6 +259,15 @@ function MessagesPageContent() {
                     const isDelivered = isCurrentUser;
                     const isUnread = !isCurrentUser && !readBy.includes(user.id);
 
+                    const handleDelete = async () => {
+                      try {
+                        await deleteMessage({ messageId: message._id });
+                      } catch (error) {
+                        console.error("Failed to delete message:", error);
+                        alert("Failed to delete message. Please try again.");
+                      }
+                    };
+
                     return (
                       <div key={message._id}>
                         {/* Date Separator */}
@@ -233,7 +286,34 @@ function MessagesPageContent() {
                               observeMessage(el);
                             }
                           }}
+                          className={cn(
+                            "flex items-center gap-3",
+                            isSelectMode && isCurrentUser && "cursor-pointer"
+                          )}
+                          onClick={() => {
+                            if (isSelectMode && isCurrentUser && !message.isDeleted) {
+                              handleToggleMessageSelect(message._id);
+                            }
+                          }}
                         >
+                          {/* Checkbox for multi-select mode */}
+                          {isSelectMode && isCurrentUser && !message.isDeleted && (
+                            <div 
+                              className={cn(
+                                "w-5 h-5 rounded border-2 flex items-center justify-center transition-all shrink-0",
+                                selectedMessages.has(message._id)
+                                  ? "bg-blue-600 border-blue-600"
+                                  : "border-gray-300 bg-white"
+                              )}
+                            >
+                              {selectedMessages.has(message._id) && (
+                                <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                </svg>
+                              )}
+                            </div>
+                          )}
+                          
                           <MessageBubble
                             messageId={message._id}
                             content={message.content}
@@ -248,6 +328,9 @@ function MessagesPageContent() {
                             isRead={isRead}
                             isDelivered={isDelivered}
                             isUnread={isUnread}
+                            isDeleted={message.isDeleted}
+                            onDelete={handleDelete}
+                            isSelectMode={isSelectMode}
                           />
                         </div>
                       </div>

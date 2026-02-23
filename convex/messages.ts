@@ -26,13 +26,12 @@ export const getMessages = query({
       throw new Error("Not authorized to view this conversation");
     }
 
-    // Get all non-deleted messages for this conversation
+    // Get all messages for this conversation (including deleted ones)
     const messages = await ctx.db
       .query("messages")
       .withIndex("by_conversation_and_time", (q) =>
         q.eq("conversationId", args.conversationId)
       )
-      .filter((q) => q.eq(q.field("isDeleted"), false))
       .collect();
 
     // Enrich messages with sender information
@@ -268,5 +267,39 @@ export const getUnreadCount = query({
     }
 
     return unreadCount;
+  },
+});
+
+/**
+ * Soft delete a message (only the sender can delete their own messages)
+ */
+export const deleteMessage = mutation({
+  args: {
+    messageId: v.id("messages"),
+  },
+  handler: async (ctx, args) => {
+    // Get authenticated user
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    // Get the message
+    const message = await ctx.db.get(args.messageId);
+    if (!message) {
+      throw new Error("Message not found");
+    }
+
+    // Verify the user is the sender
+    if (message.senderId !== identity.subject) {
+      throw new Error("Not authorized to delete this message");
+    }
+
+    // Soft delete the message
+    await ctx.db.patch(args.messageId, {
+      isDeleted: true,
+    });
+
+    return { success: true };
   },
 });
