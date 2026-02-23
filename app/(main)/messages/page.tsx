@@ -84,7 +84,7 @@ function MessagesPageContent() {
 
   if (!isLoaded || !user) {
     return (
-      <div className="flex h-screen items-center justify-center bg-white">
+      <div className="flex h-dvh items-center justify-center bg-white">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
       </div>
     );
@@ -101,12 +101,13 @@ function MessagesPageContent() {
   };
 
   // Mobile-first layout: Stack screens, show one at a time
+  // Desktop: Side-by-side layout with proper structure
   return (
-    <div className="flex h-screen flex-col bg-white">
+    <div className="flex h-dvh flex-col lg:flex-row bg-white overflow-hidden">
       {/* Conversation List Screen */}
       <div
         className={cn(
-          "flex flex-col h-full lg:max-w-md lg:border-r lg:border-gray-100",
+          "flex flex-col h-full lg:w-80 lg:border-r lg:border-gray-100 lg:shrink-0",
           conversationId ? "hidden lg:flex" : "flex"
         )}
       >
@@ -118,12 +119,7 @@ function MessagesPageContent() {
 
       {/* Chat Screen */}
       {conversationId && (
-        <div
-          className={cn(
-            "flex flex-col h-full lg:flex-1",
-            "lg:flex"
-          )}
-        >
+        <div className="flex flex-col h-full lg:flex-1">
           <ChatHeader
             name={conversation?.otherUser?.name || "Loading..."}
             profileImage={conversation?.otherUser?.profileImage}
@@ -132,13 +128,13 @@ function MessagesPageContent() {
             onBack={handleBackToList}
           />
 
-          {/* Messages */}
+          {/* Messages - with proper mobile padding for fixed input */}
           <div
             ref={scrollContainerRef}
-            className="flex-1 overflow-y-auto px-4 py-6 bg-white lg:max-w-4xl lg:mx-auto lg:w-full"
+            className="flex-1 overflow-y-auto px-4 py-4 bg-white pb-[calc(env(safe-area-inset-bottom)+80px)] lg:pb-4 lg:max-w-4xl lg:mx-auto lg:w-full"
           >
             {messages === undefined ? (
-              <div className="space-y-6">
+              <div className="space-y-4">
                 {[...Array(5)].map((_, i) => (
                   <div key={i} className={cn("flex gap-3", i % 2 === 0 ? "" : "flex-row-reverse")}>
                     <Skeleton className="h-8 w-8 rounded-full shrink-0" />
@@ -201,8 +197,8 @@ function MessagesPageContent() {
             />
           </div>
 
-          {/* Input */}
-          <div className="lg:max-w-4xl lg:mx-auto lg:w-full">
+          {/* Input - Fixed to bottom on mobile, static on desktop */}
+          <div className="fixed bottom-0 left-0 right-0 lg:static lg:max-w-4xl lg:mx-auto lg:w-full bg-white pb-[env(safe-area-inset-bottom)]">
             <MessageInputRedesigned
               conversationId={conversationId}
               onMessageSent={handleMessageSent}
@@ -210,15 +206,6 @@ function MessagesPageContent() {
           </div>
         </div>
       )}
-
-      {/* Desktop: Side-by-side layout */}
-      <style jsx global>{`
-        @media (min-width: 1024px) {
-          .flex.h-screen.flex-col.bg-white {
-            flex-direction: row;
-          }
-        }
-      `}</style>
     </div>
   );
 }
@@ -227,7 +214,7 @@ function MessagesPageContent() {
 export default function MessagesPage() {
   return (
     <Suspense fallback={
-      <div className="flex h-screen items-center justify-center bg-white">
+      <div className="flex h-dvh items-center justify-center bg-white">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
       </div>
     }>

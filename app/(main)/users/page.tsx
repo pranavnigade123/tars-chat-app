@@ -14,14 +14,14 @@ export default function UsersPage() {
 
   if (!isLoaded || !user) {
     return (
-      <div className="flex h-screen items-center justify-center bg-white">
+      <div className="flex h-dvh items-center justify-center bg-white">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
       </div>
     );
   }
 
   return (
-    <div className="flex h-screen flex-col bg-white">
+    <div className="flex h-dvh flex-col bg-white overflow-hidden">
       {/* Minimal Header */}
       <header className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-gray-100">
         <div className="flex items-center justify-between px-4 py-3">

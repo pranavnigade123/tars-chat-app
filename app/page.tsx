@@ -9,7 +9,7 @@ export default function Home() {
   const { convexUser, isLoading } = useCurrentUser();
 
   return (
-    <div className="flex min-h-screen flex-col bg-white">
+    <div className="flex min-h-dvh flex-col bg-white overflow-hidden">
       {/* Minimal header */}
       <header className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-gray-100">
         <div className="flex items-center justify-between px-4 py-3">
