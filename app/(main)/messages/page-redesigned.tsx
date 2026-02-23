@@ -30,11 +30,11 @@ export default function MessagesPage() {
 
   // Fetch data
   const messages = useQuery(
-    api.messages.getMessages,
+    conversationId ? api.messages.getMessages : undefined,
     conversationId ? { conversationId } : "skip"
   );
   const conversation = useQuery(
-    api.conversations.getConversationById,
+    conversationId ? api.conversations.getConversationById : undefined,
     conversationId ? { conversationId } : "skip"
   );
 

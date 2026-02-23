@@ -25,25 +25,27 @@ export function UserListItem({ user, onClick, isSelected = false }: UserListItem
     <button
       onClick={onClick}
       className={cn(
-        "w-full flex items-center gap-3 p-3 rounded-lg transition-colors text-left",
-        "hover:bg-gray-100",
-        isSelected && "bg-blue-50 hover:bg-blue-100"
+        "w-full flex items-center gap-4 p-4 rounded-xl transition-all text-left",
+        "hover:bg-gray-50 active:scale-[0.98]",
+        isSelected && "bg-blue-50 hover:bg-blue-50"
       )}
     >
       <div className="relative">
-        <Avatar>
+        <Avatar className="h-14 w-14">
           <AvatarImage src={user.profileImage} alt={user.name} />
-          <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
+          <AvatarFallback className="bg-gray-200 text-gray-700 text-base font-medium">
+            {getInitials(user.name)}
+          </AvatarFallback>
         </Avatar>
         <StatusIndicator 
           isOnline={user.isOnline} 
           size="md" 
-          className="absolute -bottom-1 -right-1 border-2 border-white rounded-full"
+          className="absolute bottom-0 right-0 border-2 border-white rounded-full"
         />
       </div>
       
       <div className="flex-1 min-w-0">
-        <p className="font-medium text-gray-900 truncate">{user.name}</p>
+        <p className="font-semibold text-gray-900 truncate mb-0.5">{user.name}</p>
         <p className="text-sm text-gray-500 truncate">
           {user.isOnline ? "Online" : formatLastSeen(user.lastSeen)}
         </p>
