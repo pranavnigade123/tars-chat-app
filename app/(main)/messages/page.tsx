@@ -7,6 +7,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { ConversationListHeader } from "@/components/features/navigation/ConversationListHeader";
 import { ChatHeader } from "@/components/features/navigation/ChatHeader";
+import { BottomNav } from "@/components/features/navigation/BottomNav";
 import { ConversationList } from "@/components/features/messaging/ConversationList";
 import { MessageBubble } from "@/components/features/messaging/MessageBubble";
 import { MessageInputRedesigned } from "@/components/features/messaging/MessageInputRedesigned";
@@ -103,110 +104,117 @@ function MessagesPageContent() {
   // Mobile-first layout: Stack screens, show one at a time
   // Desktop: Side-by-side layout with proper structure
   return (
-    <div className="flex h-dvh flex-col lg:flex-row bg-white overflow-hidden">
-      {/* Conversation List Screen */}
-      <div
-        className={cn(
-          "flex flex-col h-full lg:w-80 lg:border-r lg:border-gray-100 lg:shrink-0",
-          conversationId ? "hidden lg:flex" : "flex"
-        )}
-      >
-        <ConversationListHeader />
-        <div className="flex-1 overflow-y-auto">
-          <ConversationList selectedConversationId={conversationId} />
+    <>
+      <div className="flex h-dvh flex-col lg:flex-row bg-white overflow-hidden">
+        {/* Conversation List Screen */}
+        <div
+          className={cn(
+            "flex flex-col h-full lg:w-80 lg:border-r lg:border-gray-100 lg:shrink-0",
+            conversationId ? "hidden lg:flex" : "flex"
+          )}
+        >
+          <ConversationListHeader />
+          <div className="flex-1 overflow-y-auto pb-20 lg:pb-0">
+            <ConversationList selectedConversationId={conversationId} />
+          </div>
         </div>
+
+        {/* Chat Screen */}
+        {conversationId && (
+          <div className="flex flex-col h-full lg:flex-1 lg:bg-gray-50">
+            <ChatHeader
+              name={conversation?.otherUser?.name || "Loading..."}
+              profileImage={conversation?.otherUser?.profileImage}
+              status={conversation?.otherUser?.statusText || ""}
+              isOnline={conversation?.otherUser?.isOnline || false}
+              onBack={handleBackToList}
+            />
+
+            {/* Messages - with proper mobile padding for fixed input */}
+            <div
+              ref={scrollContainerRef}
+              className="flex-1 overflow-y-auto px-4 py-4 bg-white pb-[calc(env(safe-area-inset-bottom)+160px)] lg:pb-4 lg:max-w-3xl lg:mx-auto lg:w-full"
+            >
+              {messages === undefined ? (
+                <div className="space-y-4">
+                  {[...Array(5)].map((_, i) => (
+                    <div key={i} className={cn("flex gap-3", i % 2 === 0 ? "" : "flex-row-reverse")}>
+                      <Skeleton className="h-8 w-8 rounded-full shrink-0" />
+                      <Skeleton className="h-20 w-72 rounded-2xl" />
+                    </div>
+                  ))}
+                </div>
+              ) : messages.length === 0 ? (
+                <NoMessagesEmpty
+                  otherParticipantName={conversation?.otherUser?.name || "this user"}
+                />
+              ) : (
+                <div className="space-y-3">
+                  {messages.map((message, index) => {
+                    const isCurrentUser = message.senderId === user.id;
+                    const prevMessage = index > 0 ? messages[index - 1] : null;
+                    const nextMessage = index < messages.length - 1 ? messages[index + 1] : null;
+                    
+                    const showAvatar = !nextMessage || nextMessage.senderId !== message.senderId;
+                    const showName = !prevMessage || prevMessage.senderId !== message.senderId;
+                    const isGroupedWithPrev = !!(prevMessage && prevMessage.senderId === message.senderId);
+                    const isGroupedWithNext = !!(nextMessage && nextMessage.senderId === message.senderId);
+
+                    const readBy = message.readBy || [];
+                    const isRead = isCurrentUser && readBy.length > 1;
+                    const isDelivered = isCurrentUser;
+                    const isUnread = !isCurrentUser && !readBy.includes(user.id);
+
+                    return (
+                      <div
+                        key={message._id}
+                        ref={(el) => {
+                          if (!isCurrentUser && el) {
+                            observeMessage(el);
+                          }
+                        }}
+                      >
+                        <MessageBubble
+                          messageId={message._id}
+                          content={message.content}
+                          sentAt={message.sentAt}
+                          isCurrentUser={isCurrentUser}
+                          senderName={message.sender?.name}
+                          senderImage={message.sender?.profileImage}
+                          showAvatar={showAvatar}
+                          showName={showName}
+                          isGroupedWithPrev={isGroupedWithPrev}
+                          isGroupedWithNext={isGroupedWithNext}
+                          isRead={isRead}
+                          isDelivered={isDelivered}
+                          isUnread={isUnread}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              <NewMessagesButton
+                show={showNewMessagesButton}
+                onClick={() => scrollToBottom(true)}
+              />
+            </div>
+
+            {/* Input - Fixed to bottom on mobile, static on desktop */}
+            <div className="fixed bottom-16 left-0 right-0 lg:static lg:bottom-0 lg:max-w-3xl lg:mx-auto lg:w-full bg-white pb-[env(safe-area-inset-bottom)]">
+              <MessageInputRedesigned
+                conversationId={conversationId}
+                onMessageSent={handleMessageSent}
+              />
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Chat Screen */}
-      {conversationId && (
-        <div className="flex flex-col h-full lg:flex-1">
-          <ChatHeader
-            name={conversation?.otherUser?.name || "Loading..."}
-            profileImage={conversation?.otherUser?.profileImage}
-            status={conversation?.otherUser?.statusText || ""}
-            isOnline={conversation?.otherUser?.isOnline || false}
-            onBack={handleBackToList}
-          />
-
-          {/* Messages - with proper mobile padding for fixed input */}
-          <div
-            ref={scrollContainerRef}
-            className="flex-1 overflow-y-auto px-4 py-4 bg-white pb-[calc(env(safe-area-inset-bottom)+80px)] lg:pb-4 lg:max-w-4xl lg:mx-auto lg:w-full"
-          >
-            {messages === undefined ? (
-              <div className="space-y-4">
-                {[...Array(5)].map((_, i) => (
-                  <div key={i} className={cn("flex gap-3", i % 2 === 0 ? "" : "flex-row-reverse")}>
-                    <Skeleton className="h-8 w-8 rounded-full shrink-0" />
-                    <Skeleton className="h-20 w-72 rounded-2xl" />
-                  </div>
-                ))}
-              </div>
-            ) : messages.length === 0 ? (
-              <NoMessagesEmpty
-                otherParticipantName={conversation?.otherUser?.name || "this user"}
-              />
-            ) : (
-              messages.map((message, index) => {
-                const isCurrentUser = message.senderId === user.id;
-                const prevMessage = index > 0 ? messages[index - 1] : null;
-                const nextMessage = index < messages.length - 1 ? messages[index + 1] : null;
-                
-                const showAvatar = !nextMessage || nextMessage.senderId !== message.senderId;
-                const showName = !prevMessage || prevMessage.senderId !== message.senderId;
-                const isGroupedWithPrev = !!(prevMessage && prevMessage.senderId === message.senderId);
-                const isGroupedWithNext = !!(nextMessage && nextMessage.senderId === message.senderId);
-
-                const readBy = message.readBy || [];
-                const isRead = isCurrentUser && readBy.length > 1;
-                const isDelivered = isCurrentUser;
-                const isUnread = !isCurrentUser && !readBy.includes(user.id);
-
-                return (
-                  <div
-                    key={message._id}
-                    ref={(el) => {
-                      if (!isCurrentUser && el) {
-                        observeMessage(el);
-                      }
-                    }}
-                  >
-                    <MessageBubble
-                      messageId={message._id}
-                      content={message.content}
-                      sentAt={message.sentAt}
-                      isCurrentUser={isCurrentUser}
-                      senderName={message.sender?.name}
-                      senderImage={message.sender?.profileImage}
-                      showAvatar={showAvatar}
-                      showName={showName}
-                      isGroupedWithPrev={isGroupedWithPrev}
-                      isGroupedWithNext={isGroupedWithNext}
-                      isRead={isRead}
-                      isDelivered={isDelivered}
-                      isUnread={isUnread}
-                    />
-                  </div>
-                );
-              })
-            )}
-
-            <NewMessagesButton
-              show={showNewMessagesButton}
-              onClick={() => scrollToBottom(true)}
-            />
-          </div>
-
-          {/* Input - Fixed to bottom on mobile, static on desktop */}
-          <div className="fixed bottom-0 left-0 right-0 lg:static lg:max-w-4xl lg:mx-auto lg:w-full bg-white pb-[env(safe-area-inset-bottom)]">
-            <MessageInputRedesigned
-              conversationId={conversationId}
-              onMessageSent={handleMessageSent}
-            />
-          </div>
-        </div>
-      )}
-    </div>
+      {/* Bottom Navigation - Mobile Only */}
+      <BottomNav />
+    </>
   );
 }
 
