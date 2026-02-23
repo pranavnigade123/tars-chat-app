@@ -7,6 +7,7 @@ import { api } from "@/convex/_generated/api";
 const HEARTBEAT_INTERVAL = 30 * 1000; // 30 seconds
 const MAX_RETRIES = 3;
 const INITIAL_RETRY_DELAY = 1000; // 1 second
+
 /**
  * Hook to manage user presence heartbeat
  * Sends periodic heartbeats to keep user status as online
@@ -14,6 +15,7 @@ const INITIAL_RETRY_DELAY = 1000; // 1 second
 export function useHeartbeat() {
   const { isSignedIn } = useAuth();
   const sendHeartbeat = useMutation(api.presence.sendHeartbeat);
+  const markOffline = useMutation(api.presence.markOffline);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -61,7 +63,16 @@ export function useHeartbeat() {
       }
     };
 
+    // Mark offline when tab is closed or navigating away
+    const handleBeforeUnload = () => {
+      if (isSignedIn) {
+        // Use sendBeacon for reliable delivery during unload
+        markOffline().catch(() => {});
+      }
+    };
+
     document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("beforeunload", handleBeforeUnload);
 
     // Cleanup function
     return () => {
@@ -74,6 +85,7 @@ export function useHeartbeat() {
         retryTimeoutRef.current = null;
       }
       document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
     };
-  }, [isSignedIn, sendHeartbeat]);
+  }, [isSignedIn, sendHeartbeat, markOffline]);
 }

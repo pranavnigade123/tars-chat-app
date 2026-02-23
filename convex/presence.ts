@@ -12,7 +12,7 @@ export function isUserOnline(lastSeen: number): boolean {
 
 /**
  * Send a heartbeat to update the user's presence status
- * Updates lastSeen timestamp and sets isOnline to true
+ * Updates lastSeen timestamp (online status computed from this)
  */
 export const sendHeartbeat = mutation({
   args: {},
@@ -36,10 +36,36 @@ export const sendHeartbeat = mutation({
       return { success: false, reason: "User not synced yet" };
     }
     
-    // Update user's presence
+    // Update user's lastSeen timestamp
+    // Online status is computed from lastSeen in queries
     await ctx.db.patch(user._id, {
       lastSeen: Date.now(),
-      isOnline: true,
+    });
+    
+    return { success: true };
+  },
+});
+
+/**
+ * Mark user as offline immediately
+ * Called when tab is closed or user navigates away
+ */
+export const markOffline = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return { success: false };
+    
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+    
+    if (!user) return { success: false };
+    
+    // Set lastSeen to past to mark as offline
+    await ctx.db.patch(user._id, {
+      lastSeen: Date.now() - (10 * 60 * 1000), // 10 minutes ago
     });
     
     return { success: true };
