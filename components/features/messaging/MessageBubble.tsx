@@ -51,17 +51,9 @@ export function MessageBubble({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Avatar */}
-      <div className="w-8 shrink-0 flex items-end">
-        {showAvatar ? (
-          <Avatar className="h-8 w-8">
-            <AvatarImage src={senderImage} alt={senderName || "User"} />
-            <AvatarFallback className="bg-gray-200 text-gray-700 text-xs">
-              {getInitials(senderName || "?")}
-            </AvatarFallback>
-          </Avatar>
-        ) : null}
-      </div>
+      {/* Avatar - Hidden for 1v1 chats, will be shown for group chats */}
+      {/* Keeping the space for alignment */}
+      <div className="w-0 shrink-0" />
 
       {/* Message content */}
       <div
@@ -70,11 +62,12 @@ export function MessageBubble({
           isCurrentUser ? "items-end" : "items-start"
         )}
       >
-        {showName && !isCurrentUser && (
+        {/* Sender name - Hidden for 1v1, will show for group chats */}
+        {/* {showName && !isCurrentUser && (
           <span className="text-xs font-medium text-gray-600 px-3 mb-1.5">
             {senderName || "Unknown"}
           </span>
-        )}
+        )} */}
         
         <div className="relative">
           {/* NEW badge */}
@@ -86,7 +79,7 @@ export function MessageBubble({
           
           <div
             className={cn(
-              "px-4 py-2.5 rounded-2xl transition-all duration-200",
+              "px-3 py-2 rounded-2xl transition-all duration-200 inline-block",
               isCurrentUser
                 ? "bg-blue-600 text-white"
                 : isUnread
@@ -107,37 +100,29 @@ export function MessageBubble({
               isHovered && "shadow-sm"
             )}
           >
-            <p className="whitespace-pre-wrap break-words leading-relaxed text-[15px]">
-              {content}
-            </p>
-            
-            {/* Read receipt for sent messages */}
-            {isCurrentUser && (
-              <div className="flex items-center justify-end gap-1.5 mt-1">
-                <span className="text-xs opacity-75">
+            <div className="flex items-end gap-2">
+              <p className="whitespace-pre-wrap break-words leading-relaxed text-[15px]">
+                {content}
+              </p>
+              <div className="flex items-center gap-1 shrink-0 self-end pb-[1px]">
+                <span className={cn(
+                  "text-[10px] leading-none",
+                  isCurrentUser ? "text-white/70" : "text-gray-500"
+                )}>
                   {formatMessageTime(sentAt)}
                 </span>
-                {isRead ? (
-                  <CheckCheck className="h-3.5 w-3.5 opacity-90" aria-label="Read" />
-                ) : isDelivered ? (
-                  <Check className="h-3.5 w-3.5 opacity-75" aria-label="Delivered" />
-                ) : null}
+                {isCurrentUser && (
+                  <>
+                    {isRead ? (
+                      <CheckCheck className="h-3 w-3 text-white/70" aria-label="Read" />
+                    ) : isDelivered ? (
+                      <Check className="h-3 w-3 text-white/70" aria-label="Delivered" />
+                    ) : null}
+                  </>
+                )}
               </div>
-            )}
-          </div>
-          
-          {/* Timestamp on hover for received messages */}
-          {!isCurrentUser && (
-            <div
-              className={cn(
-                "absolute -bottom-5 text-xs text-gray-500 transition-opacity duration-200 whitespace-nowrap",
-                "left-0",
-                isHovered ? "opacity-100" : "opacity-0"
-              )}
-            >
-              {formatMessageTime(sentAt)}
             </div>
-          )}
+          </div>
         </div>
       </div>
     </div>
