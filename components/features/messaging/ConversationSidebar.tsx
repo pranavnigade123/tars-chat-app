@@ -24,14 +24,14 @@ interface ConversationItemProps {
     _id: Id<"conversations">;
     otherUser: {
       name: string;
-      profileImage: string;
+      profileImage?: string;
       clerkId: string;
       isOnline: boolean;
     };
     latestMessage?: {
       content: string;
       sentAt: number;
-    };
+    } | null;
   };
   isSelected: boolean;
 }

@@ -9,7 +9,7 @@ interface UseAutoScrollOptions {
 }
 
 interface UseAutoScrollReturn {
-  scrollContainerRef: React.RefObject<HTMLDivElement>;
+  scrollContainerRef: React.RefObject<HTMLDivElement | null>;
   isAtBottom: boolean;
   showNewMessagesButton: boolean;
   scrollToBottom: (smooth?: boolean) => void;

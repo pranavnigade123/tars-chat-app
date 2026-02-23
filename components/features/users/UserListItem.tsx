@@ -10,7 +10,7 @@ interface User {
   name: string;
   email: string;
   profileImage?: string;
-  isOnline: boolean;
+  isOnline?: boolean;
   lastSeen: number;
 }
 
@@ -38,7 +38,7 @@ export function UserListItem({ user, onClick, isSelected = false }: UserListItem
           </AvatarFallback>
         </Avatar>
         <StatusIndicator 
-          isOnline={user.isOnline} 
+          isOnline={user.isOnline ?? false} 
           size="md" 
           className="absolute bottom-0 right-0 border-2 border-white rounded-full"
         />

@@ -30,11 +30,11 @@ export default function MessagesPage() {
 
   // Fetch data
   const messages = useQuery(
-    conversationId ? api.messages.getMessages : undefined,
+    api.messages.getMessages,
     conversationId ? { conversationId } : "skip"
   );
   const conversation = useQuery(
-    conversationId ? api.conversations.getConversationById : undefined,
+    api.conversations.getConversationById,
     conversationId ? { conversationId } : "skip"
   );
 
@@ -158,8 +158,8 @@ export default function MessagesPage() {
                 
                 const showAvatar = !nextMessage || nextMessage.senderId !== message.senderId;
                 const showName = !prevMessage || prevMessage.senderId !== message.senderId;
-                const isGroupedWithPrev = prevMessage && prevMessage.senderId === message.senderId;
-                const isGroupedWithNext = nextMessage && nextMessage.senderId === message.senderId;
+                const isGroupedWithPrev = !!(prevMessage && prevMessage.senderId === message.senderId);
+                const isGroupedWithNext = !!(nextMessage && nextMessage.senderId === message.senderId);
 
                 const readBy = message.readBy || [];
                 const isRead = isCurrentUser && readBy.length > 1;

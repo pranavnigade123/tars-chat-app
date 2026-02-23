@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, Suspense } from "react";
 import { useUser } from "@clerk/nextjs";
 import { redirect, useSearchParams, useRouter } from "next/navigation";
 import { useQuery, useMutation } from "convex/react";
@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils";
 import type { Id } from "@/convex/_generated/dataModel";
 import { useCallback } from "react";
 
-export default function MessagesPage() {
+function MessagesPageContent() {
   const { user, isLoaded } = useUser();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -158,8 +158,8 @@ export default function MessagesPage() {
                 
                 const showAvatar = !nextMessage || nextMessage.senderId !== message.senderId;
                 const showName = !prevMessage || prevMessage.senderId !== message.senderId;
-                const isGroupedWithPrev = prevMessage && prevMessage.senderId === message.senderId;
-                const isGroupedWithNext = nextMessage && nextMessage.senderId === message.senderId;
+                const isGroupedWithPrev = !!(prevMessage && prevMessage.senderId === message.senderId);
+                const isGroupedWithNext = !!(nextMessage && nextMessage.senderId === message.senderId);
 
                 const readBy = message.readBy || [];
                 const isRead = isCurrentUser && readBy.length > 1;
@@ -220,5 +220,18 @@ export default function MessagesPage() {
         }
       `}</style>
     </div>
+  );
+}
+
+
+export default function MessagesPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex h-screen items-center justify-center bg-white">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
+      </div>
+    }>
+      <MessagesPageContent />
+    </Suspense>
   );
 }
