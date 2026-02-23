@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/utils/getInitials";
 import { formatMessageTime } from "@/lib/utils/formatTimestamp";
@@ -39,6 +39,18 @@ export function MessageBubble({
   messageId,
 }: MessageBubbleProps) {
   const [isHovered, setIsHovered] = useState(false);
+  const [showNewBadge, setShowNewBadge] = useState(isUnread);
+
+  // Hide NEW badge after 2 seconds
+  useEffect(() => {
+    if (isUnread) {
+      setShowNewBadge(true);
+      const timer = setTimeout(() => {
+        setShowNewBadge(false);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [isUnread, messageId]);
 
   return (
     <div
@@ -70,9 +82,9 @@ export function MessageBubble({
         )} */}
         
         <div className="relative">
-          {/* NEW badge */}
-          {isUnread && (
-            <div className="absolute -top-2 -left-2 bg-blue-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm z-10">
+          {/* NEW badge - shows for 2 seconds only */}
+          {showNewBadge && (
+            <div className="absolute -top-2 -left-2 bg-blue-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm z-10 animate-in fade-in zoom-in duration-200">
               NEW
             </div>
           )}

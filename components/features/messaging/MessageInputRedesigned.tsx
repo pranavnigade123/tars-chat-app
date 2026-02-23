@@ -118,14 +118,21 @@ export function MessageInputRedesigned({ conversationId, onMessageSent }: Messag
     
     if (!trimmedContent) return;
 
+    // Clear typing state immediately before sending
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+    clearTypingState({ conversationId }).catch(() => {});
+
+    // Clear input immediately for better UX (fast messaging)
+    const messageToSend = trimmedContent;
+    setContent("");
     setIsSending(true);
     setError(null);
 
     try {
-      await clearTypingState({ conversationId });
-      await sendMessage({ conversationId, content: trimmedContent });
+      await sendMessage({ conversationId, content: messageToSend });
 
-      setContent("");
       setFailedMessage(null);
       
       const draftKey = `draft_${conversationId}`;
@@ -133,14 +140,19 @@ export function MessageInputRedesigned({ conversationId, onMessageSent }: Messag
       localStorage.removeItem(draftKey);
       localStorage.removeItem(draftTimestampKey);
       
-      textareaRef.current?.focus();
       onMessageSent?.();
     } catch (err) {
       console.error("Failed to send message:", err);
       setError("Failed to send message.");
-      setFailedMessage(trimmedContent);
+      setFailedMessage(messageToSend);
+      // Restore content on failure
+      setContent(messageToSend);
     } finally {
       setIsSending(false);
+      // Keep focus on textarea after sending
+      setTimeout(() => {
+        textareaRef.current?.focus();
+      }, 0);
     }
   };
 
@@ -168,6 +180,11 @@ export function MessageInputRedesigned({ conversationId, onMessageSent }: Messag
     clearTypingState({ conversationId }).catch(() => {});
   };
 
+  // Click handler for wrapper to focus textarea
+  const handleWrapperClick = () => {
+    textareaRef.current?.focus();
+  };
+
   return (
     <div className="p-3 lg:p-4 bg-white border-t border-gray-100">
       {error && (
@@ -188,8 +205,9 @@ export function MessageInputRedesigned({ conversationId, onMessageSent }: Messag
       )}
       
       <div 
+        onClick={handleWrapperClick}
         className={cn(
-          "flex items-end gap-2 rounded-2xl bg-gray-50 px-3 py-2 lg:px-4 lg:py-3 transition-all duration-200",
+          "flex items-end gap-2 rounded-2xl bg-gray-50 px-3 py-2 lg:px-4 lg:py-3 transition-all duration-200 cursor-text",
           isFocused && "bg-white ring-2 ring-blue-500 shadow-sm"
         )}
       >

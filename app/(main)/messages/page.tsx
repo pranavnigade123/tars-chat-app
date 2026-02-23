@@ -12,6 +12,7 @@ import { ConversationList } from "@/components/features/messaging/ConversationLi
 import { MessageBubble } from "@/components/features/messaging/MessageBubble";
 import { MessageInputRedesigned } from "@/components/features/messaging/MessageInputRedesigned";
 import { NewMessagesButton } from "@/components/features/messaging/NewMessagesButton";
+import { TypingIndicator } from "@/components/features/messaging/TypingIndicator";
 import { NoMessagesEmpty } from "@/components/features/empty-states";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAutoScroll } from "@/lib/hooks/useAutoScroll";
@@ -81,7 +82,7 @@ function MessagesPageContent() {
       const timeoutId = setTimeout(() => {
         markMessagesAsRead({ conversationId })
           .catch((err) => console.error("Failed to mark messages as read:", err));
-      }, 1000);
+      }, 300); // Reduced from 1000ms to 300ms
       return () => clearTimeout(timeoutId);
     }
   }, [conversationId, markMessagesAsRead]);
@@ -244,6 +245,11 @@ function MessagesPageContent() {
                 show={showNewMessagesButton}
                 onClick={() => scrollToBottom(true)}
               />
+            </div>
+
+            {/* Typing Indicator - Fixed position above input */}
+            <div className="absolute bottom-[calc(env(safe-area-inset-bottom)+80px)] left-0 right-0 lg:bottom-20 pointer-events-none">
+              <TypingIndicator conversationId={conversationId} />
             </div>
 
             {/* Input - Fixed to bottom on mobile, static on desktop */}
