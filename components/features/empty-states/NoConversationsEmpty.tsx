@@ -1,6 +1,6 @@
 "use client";
 
-import { MessageSquare } from "lucide-react";
+import { MessageSquare, Users, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 interface NoConversationsEmptyProps {
@@ -17,22 +17,38 @@ export function NoConversationsEmpty({
   };
 
   return (
-    <div className="flex flex-col items-center justify-center p-12 text-center min-h-[60vh]">
-      <div className="rounded-full bg-gray-100 p-6 mb-6">
-        <MessageSquare className="h-10 w-10 text-gray-400" />
+    <div className="flex flex-col items-center justify-center p-8 sm:p-12 text-center min-h-[60vh]">
+      {/* Illustration */}
+      <div className="relative mb-8">
+        <div className="rounded-3xl bg-gradient-to-br from-blue-50 to-blue-100 p-8 sm:p-10">
+          <MessageSquare className="h-16 w-16 sm:h-20 sm:w-20 text-blue-600" strokeWidth={1.5} />
+        </div>
+        <div className="absolute -top-2 -right-2 rounded-full bg-yellow-400 p-2 shadow-lg">
+          <Sparkles className="h-5 w-5 text-white" fill="currentColor" />
+        </div>
       </div>
-      <h3 className="text-lg font-semibold text-gray-900 mb-2">
-        No messages yet
+      
+      {/* Content */}
+      <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3">
+        Your inbox is empty
       </h3>
-      <p className="text-sm text-gray-500 mb-8 max-w-xs">
-        Start a conversation with someone
+      <p className="text-sm sm:text-base text-gray-600 mb-8 max-w-sm leading-relaxed">
+        Start meaningful conversations with people. Connect, chat, and build relationships.
       </p>
+      
+      {/* Action */}
       <button
         onClick={handleStartConversation}
-        className="px-5 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700 transition-colors"
+        className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 active:scale-95 transition-all shadow-lg shadow-blue-600/30"
       >
-        Find people
+        <Users className="h-4 w-4" />
+        <span>Find People to Chat</span>
       </button>
+      
+      {/* Helper text */}
+      <p className="mt-6 text-xs text-gray-400">
+        Browse users and start your first conversation
+      </p>
     </div>
   );
 }
