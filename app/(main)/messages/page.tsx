@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, Suspense } from "react";
 import { useUser } from "@clerk/nextjs";
-import { redirect, useSearchParams, useRouter } from "next/navigation";
+import { redirect, useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { ConversationListHeader } from "@/components/features/navigation/ConversationListHeader";
@@ -19,11 +19,14 @@ import { useMessageVisibility } from "@/lib/hooks/useMessageVisibility";
 import { cn } from "@/lib/utils";
 import type { Id } from "@/convex/_generated/dataModel";
 import { useCallback } from "react";
+import Link from "next/link";
+import { MessageSquare, Users, User } from "lucide-react";
 
 function MessagesPageContent() {
   const { user, isLoaded } = useUser();
   const searchParams = useSearchParams();
   const router = useRouter();
+  const pathname = usePathname();
   const conversationId = searchParams.get("conversationId") as Id<"conversations"> | null;
   const markMessagesAsRead = useMutation(api.messages.markMessagesAsRead);
   const markMessageAsRead = useMutation(api.messages.markMessageAsRead);
@@ -102,22 +105,64 @@ function MessagesPageContent() {
   };
 
   // Mobile-first layout: Stack screens, show one at a time
-  // Desktop: Side-by-side layout with proper structure
+  // Desktop: Vertical sidebar nav + conversation list + chat
   return (
     <>
-      <div className="flex h-dvh flex-col lg:flex-row bg-white overflow-hidden">
-        {/* Conversation List Screen */}
-        <div
-          className={cn(
-            "flex flex-col h-full lg:w-80 lg:border-r lg:border-gray-100 lg:shrink-0",
-            conversationId ? "hidden lg:flex" : "flex"
-          )}
-        >
-          <ConversationListHeader />
-          <div className="flex-1 overflow-y-auto pb-20 lg:pb-0">
-            <ConversationList selectedConversationId={conversationId} />
-          </div>
+      <div className="flex h-dvh bg-white overflow-hidden">
+        {/* Desktop Vertical Sidebar Navigation - Hidden on Mobile */}
+        <div className="hidden lg:flex lg:flex-col lg:w-16 lg:border-r lg:border-gray-200 lg:bg-gray-50 lg:items-center lg:py-4 lg:gap-2">
+          <Link
+            href="/messages"
+            className={cn(
+              "flex flex-col items-center justify-center w-12 h-12 rounded-xl transition-colors gap-1",
+              pathname.startsWith("/messages")
+                ? "bg-blue-100 text-blue-600"
+                : "text-gray-600 hover:bg-gray-100"
+            )}
+          >
+            <MessageSquare className="h-5 w-5" />
+            <span className="text-[10px] font-medium">Chats</span>
+          </Link>
+          <Link
+            href="/users"
+            className={cn(
+              "flex flex-col items-center justify-center w-12 h-12 rounded-xl transition-colors gap-1",
+              pathname === "/users"
+                ? "bg-blue-100 text-blue-600"
+                : "text-gray-600 hover:bg-gray-100"
+            )}
+          >
+            <Users className="h-5 w-5" />
+            <span className="text-[10px] font-medium">People</span>
+          </Link>
+          <Link
+            href="/profile"
+            className={cn(
+              "flex flex-col items-center justify-center w-12 h-12 rounded-xl transition-colors gap-1 mt-auto",
+              pathname === "/profile"
+                ? "bg-blue-100 text-blue-600"
+                : "text-gray-600 hover:bg-gray-100"
+            )}
+          >
+            <User className="h-5 w-5" />
+            <span className="text-[10px] font-medium">Profile</span>
+          </Link>
         </div>
+
+        {/* Main Content Area */}
+        <div className="flex flex-col lg:flex-row flex-1 overflow-hidden">
+          {/* Conversation List Screen */}
+          <div
+            className={cn(
+              "flex flex-col h-full lg:w-80 lg:border-r lg:border-gray-100 lg:shrink-0",
+              conversationId ? "hidden lg:flex" : "flex"
+            )}
+          >
+            <ConversationListHeader />
+            <div className="flex-1 overflow-y-auto pb-20 lg:pb-0">
+              <ConversationList selectedConversationId={conversationId} />
+            </div>
+          </div>
 
         {/* Chat Screen */}
         {conversationId && (
@@ -133,7 +178,7 @@ function MessagesPageContent() {
             {/* Messages - with proper mobile padding for fixed input */}
             <div
               ref={scrollContainerRef}
-              className="flex-1 overflow-y-auto px-4 py-4 bg-white pb-[calc(env(safe-area-inset-bottom)+160px)] lg:pb-4"
+              className="flex-1 overflow-y-auto px-4 py-4 bg-white pb-[calc(env(safe-area-inset-bottom)+80px)] lg:pb-4"
             >
               {messages === undefined ? (
                 <div className="space-y-4">
@@ -202,7 +247,7 @@ function MessagesPageContent() {
             </div>
 
             {/* Input - Fixed to bottom on mobile, static on desktop */}
-            <div className="fixed bottom-16 left-0 right-0 lg:static lg:bottom-0 bg-white pb-[env(safe-area-inset-bottom)]">
+            <div className="fixed bottom-0 left-0 right-0 lg:static lg:bottom-0 bg-white pb-[env(safe-area-inset-bottom)]">
               <MessageInputRedesigned
                 conversationId={conversationId}
                 onMessageSent={handleMessageSent}
@@ -210,10 +255,11 @@ function MessagesPageContent() {
             </div>
           </div>
         )}
+        </div>
       </div>
 
-      {/* Bottom Navigation - Mobile Only */}
-      <BottomNav />
+      {/* Bottom Navigation - Mobile Only - Hidden when in chat */}
+      {!conversationId && <BottomNav />}
     </>
   );
 }
