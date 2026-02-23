@@ -133,7 +133,7 @@ function MessagesPageContent() {
             {/* Messages - with proper mobile padding for fixed input */}
             <div
               ref={scrollContainerRef}
-              className="flex-1 overflow-y-auto px-4 py-4 bg-white pb-[calc(env(safe-area-inset-bottom)+160px)] lg:pb-4 lg:max-w-3xl lg:mx-auto lg:w-full"
+              className="flex-1 overflow-y-auto px-4 py-4 bg-white pb-[calc(env(safe-area-inset-bottom)+160px)] lg:pb-4"
             >
               {messages === undefined ? (
                 <div className="space-y-4">
@@ -202,7 +202,7 @@ function MessagesPageContent() {
             </div>
 
             {/* Input - Fixed to bottom on mobile, static on desktop */}
-            <div className="fixed bottom-16 left-0 right-0 lg:static lg:bottom-0 lg:max-w-3xl lg:mx-auto lg:w-full bg-white pb-[env(safe-area-inset-bottom)]">
+            <div className="fixed bottom-16 left-0 right-0 lg:static lg:bottom-0 bg-white pb-[env(safe-area-inset-bottom)]">
               <MessageInputRedesigned
                 conversationId={conversationId}
                 onMessageSent={handleMessageSent}
