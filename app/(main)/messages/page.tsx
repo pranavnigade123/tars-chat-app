@@ -17,6 +17,7 @@ import { NoMessagesEmpty } from "@/components/features/empty-states";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAutoScroll } from "@/lib/hooks/useAutoScroll";
 import { useMessageVisibility } from "@/lib/hooks/useMessageVisibility";
+import { getDateLabel, isDifferentDay } from "@/lib/utils/timestamp";
 import { cn } from "@/lib/utils";
 import type { Id } from "@/convex/_generated/dataModel";
 import { useCallback } from "react";
@@ -201,6 +202,9 @@ function MessagesPageContent() {
                     const prevMessage = index > 0 ? messages[index - 1] : null;
                     const nextMessage = index < messages.length - 1 ? messages[index + 1] : null;
                     
+                    // Check if we need to show a date separator
+                    const showDateSeparator = !prevMessage || isDifferentDay(prevMessage.sentAt, message.sentAt);
+                    
                     const showAvatar = !nextMessage || nextMessage.senderId !== message.senderId;
                     const showName = !prevMessage || prevMessage.senderId !== message.senderId;
                     const isGroupedWithPrev = !!(prevMessage && prevMessage.senderId === message.senderId);
@@ -212,29 +216,40 @@ function MessagesPageContent() {
                     const isUnread = !isCurrentUser && !readBy.includes(user.id);
 
                     return (
-                      <div
-                        key={message._id}
-                        ref={(el) => {
-                          if (!isCurrentUser && el) {
-                            observeMessage(el);
-                          }
-                        }}
-                      >
-                        <MessageBubble
-                          messageId={message._id}
-                          content={message.content}
-                          sentAt={message.sentAt}
-                          isCurrentUser={isCurrentUser}
-                          senderName={message.sender?.name}
-                          senderImage={message.sender?.profileImage}
-                          showAvatar={showAvatar}
-                          showName={showName}
-                          isGroupedWithPrev={isGroupedWithPrev}
-                          isGroupedWithNext={isGroupedWithNext}
-                          isRead={isRead}
-                          isDelivered={isDelivered}
-                          isUnread={isUnread}
-                        />
+                      <div key={message._id}>
+                        {/* Date Separator */}
+                        {showDateSeparator && (
+                          <div className="flex items-center justify-center my-4">
+                            <div className="bg-gray-100 text-gray-600 text-xs font-medium px-3 py-1 rounded-full">
+                              {getDateLabel(message.sentAt)}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Message Bubble */}
+                        <div
+                          ref={(el) => {
+                            if (!isCurrentUser && el) {
+                              observeMessage(el);
+                            }
+                          }}
+                        >
+                          <MessageBubble
+                            messageId={message._id}
+                            content={message.content}
+                            sentAt={message.sentAt}
+                            isCurrentUser={isCurrentUser}
+                            senderName={message.sender?.name}
+                            senderImage={message.sender?.profileImage}
+                            showAvatar={showAvatar}
+                            showName={showName}
+                            isGroupedWithPrev={isGroupedWithPrev}
+                            isGroupedWithNext={isGroupedWithNext}
+                            isRead={isRead}
+                            isDelivered={isDelivered}
+                            isUnread={isUnread}
+                          />
+                        </div>
                       </div>
                     );
                   })}
