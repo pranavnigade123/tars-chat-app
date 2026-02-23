@@ -4,6 +4,7 @@ import { useState, useRef, KeyboardEvent, useCallback, useEffect } from "react";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Send } from "lucide-react";
+import { AnimatedButton } from "@/components/ui/motion";
 import type { Id } from "@/convex/_generated/dataModel";
 import { useDebounce } from "@/lib/hooks/useDebouncedCallback";
 import { cn } from "@/lib/utils";
@@ -227,19 +228,20 @@ export function MessageInputRedesigned({ conversationId, onMessageSent }: Messag
           className="flex-1 resize-none bg-transparent text-gray-900 placeholder:text-gray-400 focus:outline-none disabled:cursor-not-allowed max-h-[120px] text-base lg:text-[15px] leading-relaxed"
         />
         
-        <button
+        <AnimatedButton
           onClick={handleSend}
           disabled={isSending || !content.trim()}
+          scaleOnHover={!!(content.trim() && !isSending)}
           className={cn(
-            "flex h-9 w-9 lg:h-10 lg:w-10 items-center justify-center rounded-full transition-all duration-200 shrink-0",
+            "flex h-9 w-9 lg:h-10 lg:w-10 items-center justify-center rounded-full transition-colors duration-200 shrink-0",
             content.trim() && !isSending
-              ? "bg-blue-600 text-white hover:bg-blue-700 active:scale-95 shadow-sm"
+              ? "bg-blue-600 text-white hover:bg-blue-700 shadow-sm"
               : "bg-gray-200 text-gray-400 cursor-not-allowed"
           )}
           aria-label="Send message"
         >
           <Send className="h-4 w-4 lg:h-[18px] lg:w-[18px]" />
-        </button>
+        </AnimatedButton>
       </div>
     </div>
   );

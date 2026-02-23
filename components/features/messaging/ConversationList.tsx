@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { api } from "@/convex/_generated/api";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AnimatedButton, AnimatedBadge } from "@/components/ui/motion";
 import { getInitials } from "@/lib/utils/getInitials";
 import { formatTimestamp } from "@/lib/utils/formatTimestamp";
 import { truncateMessage } from "@/lib/utils/truncateMessage";
@@ -52,13 +53,15 @@ function ConversationItem({ conversation, isSelected }: ConversationItemProps) {
   };
 
   return (
-    <button
+    <AnimatedButton
       onClick={handleClick}
+      scaleOnTap={true}
+      scaleOnHover={false}
       className={cn(
         "w-full flex items-center gap-4 px-4 py-4 transition-colors text-left",
         isSelected 
           ? "bg-gray-50" 
-          : "hover:bg-gray-50/50 active:bg-gray-100"
+          : "hover:bg-gray-50/50"
       )}
     >
       <div className="relative shrink-0">
@@ -109,13 +112,13 @@ function ConversationItem({ conversation, isSelected }: ConversationItemProps) {
           </p>
           
           {hasUnread && (
-            <div className="shrink-0 min-w-[20px] h-5 px-1.5 rounded-full bg-blue-600 text-white text-xs flex items-center justify-center font-semibold">
+            <AnimatedBadge className="shrink-0 min-w-[20px] h-5 px-1.5 rounded-full bg-blue-600 text-white text-xs flex items-center justify-center font-semibold">
               {unreadCount > 99 ? '99+' : unreadCount}
-            </div>
+            </AnimatedBadge>
           )}
         </div>
       </div>
-    </button>
+    </AnimatedButton>
   );
 }
 

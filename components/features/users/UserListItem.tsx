@@ -1,5 +1,6 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { StatusIndicator } from "@/components/features/presence/StatusIndicator";
+import { AnimatedButton } from "@/components/ui/motion";
 import { getInitials } from "@/lib/utils/getInitials";
 import { formatLastSeen } from "@/lib/utils";
 import { cn } from "@/lib/utils";
@@ -22,11 +23,13 @@ interface UserListItemProps {
 
 export function UserListItem({ user, onClick, isSelected = false }: UserListItemProps) {
   return (
-    <button
+    <AnimatedButton
       onClick={onClick}
+      scaleOnTap={true}
+      scaleOnHover={false}
       className={cn(
-        "w-full flex items-center gap-4 p-4 rounded-xl transition-all text-left",
-        "hover:bg-gray-50 active:scale-[0.98]",
+        "w-full flex items-center gap-4 p-4 rounded-xl transition-colors text-left",
+        "hover:bg-gray-50",
         isSelected && "bg-blue-50 hover:bg-blue-50"
       )}
     >
@@ -50,6 +53,6 @@ export function UserListItem({ user, onClick, isSelected = false }: UserListItem
           {user.isOnline ? "Online" : formatLastSeen(user.lastSeen)}
         </p>
       </div>
-    </button>
+    </AnimatedButton>
   );
 }
