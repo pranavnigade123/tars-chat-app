@@ -3,11 +3,10 @@
 import { useUser } from "@clerk/nextjs";
 import { redirect, usePathname } from "next/navigation";
 import { motion } from "framer-motion";
-import { UserButton } from "@clerk/nextjs";
 import { BottomNav } from "@/components/features/navigation/BottomNav";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/utils/getInitials";
-import { Mail, User as UserIcon, MessageSquare, Users } from "lucide-react";
+import { MessageSquare, Users, CheckCircle, Calendar } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
@@ -65,7 +64,7 @@ export default function ProfilePage() {
                 : "text-gray-600 hover:bg-gray-100"
             )}
           >
-            <UserIcon className="h-5 w-5" />
+            <Users className="h-5 w-5" />
             <span className="text-[10px] font-medium">Profile</span>
           </Link>
         </div>
@@ -86,85 +85,91 @@ export default function ProfilePage() {
           <header className="sticky top-0 z-10 bg-white border-b border-gray-200">
             <div className="flex items-center justify-between px-4 py-3">
               <h1 className="text-xl font-semibold text-gray-900">Profile</h1>
-              <UserButton 
-                appearance={{
-                  elements: {
-                    avatarBox: "w-9 h-9"
-                  }
-                }}
-              />
             </div>
           </header>
           
           <main className="flex-1 overflow-y-auto pb-20 lg:pb-0">
-          <div className="max-w-2xl mx-auto p-6">
+          <div className="max-w-2xl mx-auto p-4 lg:p-6">
             {/* Profile Card */}
-            <div className="bg-white rounded-2xl border border-gray-200 p-8 mb-6">
+            <div className="bg-white rounded-2xl border border-gray-200 p-6 lg:p-8 mb-4 lg:mb-6">
               <div className="flex flex-col items-center text-center">
-                <Avatar className="h-24 w-24 mb-4">
+                <Avatar className="h-20 w-20 lg:h-24 lg:w-24 mb-3 lg:mb-4">
                   <AvatarImage src={user.imageUrl} alt={user.fullName || "User"} />
-                  <AvatarFallback className="bg-blue-100 text-blue-600 text-2xl font-semibold">
+                  <AvatarFallback className="bg-blue-100 text-blue-600 text-xl lg:text-2xl font-semibold">
                     {getInitials(user.fullName || user.username || "?")}
                   </AvatarFallback>
                 </Avatar>
-                <h2 className="text-2xl font-semibold text-gray-900 mb-2">
+                <h2 className="text-xl lg:text-2xl font-semibold text-gray-900 mb-1 lg:mb-2">
                   {user.fullName || user.username || "User"}
                 </h2>
-                <p className="text-gray-500 text-sm mb-6">
+                <p className="text-gray-500 text-xs lg:text-sm">
                   {user.primaryEmailAddress?.emailAddress}
                 </p>
-                
-                {/* Quick Actions */}
-                <div className="w-full pt-6 border-t border-gray-100">
-                  <UserButton 
-                    appearance={{
-                      elements: {
-                        rootBox: "w-full",
-                        userButtonBox: "w-full",
-                        userButtonTrigger: "w-full justify-center px-6 py-3 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-colors font-medium"
-                      }
-                    }}
-                  />
+              </div>
+            </div>
+
+            {/* Stats Cards */}
+            <div className="grid grid-cols-2 gap-3 lg:gap-4 mb-4 lg:mb-6">
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-4 lg:p-6 border border-blue-200">
+                <div className="flex flex-col items-center text-center">
+                  <div className="flex items-center justify-center w-10 h-10 lg:w-12 lg:h-12 rounded-full bg-blue-600 mb-2 lg:mb-3">
+                    <CheckCircle className="h-5 w-5 lg:h-6 lg:w-6 text-white" />
+                  </div>
+                  <p className="text-[10px] lg:text-xs text-blue-700 font-semibold uppercase tracking-wide mb-1">Status</p>
+                  <p className="text-sm lg:text-base text-gray-900 font-semibold">Active</p>
+                </div>
+              </div>
+
+              <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-2xl p-4 lg:p-6 border border-green-200">
+                <div className="flex flex-col items-center text-center">
+                  <div className="flex items-center justify-center w-10 h-10 lg:w-12 lg:h-12 rounded-full bg-green-600 mb-2 lg:mb-3">
+                    <Calendar className="h-5 w-5 lg:h-6 lg:w-6 text-white" />
+                  </div>
+                  <p className="text-[10px] lg:text-xs text-green-700 font-semibold uppercase tracking-wide mb-1">Joined</p>
+                  <p className="text-sm lg:text-base text-gray-900 font-semibold">
+                    {new Date(user.createdAt!).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                  </p>
                 </div>
               </div>
             </div>
 
-            {/* Info Cards */}
-            <div className="grid gap-4 mb-6">
-              <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-6 border border-blue-200">
-                <div className="flex items-start gap-4">
-                  <div className="flex items-center justify-center w-12 h-12 rounded-full bg-blue-600 shrink-0">
-                    <UserIcon className="h-6 w-6 text-white" />
+            {/* Quick Links */}
+            <div className="bg-white rounded-2xl border border-gray-200 p-4 lg:p-6 mb-4 lg:mb-6">
+              <h3 className="text-xs lg:text-sm font-semibold text-gray-900 mb-3 lg:mb-4">Quick Actions</h3>
+              <div className="space-y-2">
+                <Link
+                  href="/messages"
+                  className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors group"
+                >
+                  <div className="flex items-center justify-center w-10 h-10 rounded-full bg-blue-100 group-hover:bg-blue-200 transition-colors">
+                    <MessageSquare className="h-5 w-5 text-blue-600" />
                   </div>
                   <div className="flex-1">
-                    <p className="text-xs text-blue-700 font-semibold uppercase tracking-wide mb-1">Display Name</p>
-                    <p className="text-lg text-gray-900 font-semibold">
-                      {user.fullName || user.username || "Not set"}
-                    </p>
+                    <p className="text-sm font-medium text-gray-900">My Conversations</p>
+                    <p className="text-xs text-gray-500">View all your chats</p>
                   </div>
-                </div>
-              </div>
-
-              <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-2xl p-6 border border-green-200">
-                <div className="flex items-start gap-4">
-                  <div className="flex items-center justify-center w-12 h-12 rounded-full bg-green-600 shrink-0">
-                    <Mail className="h-6 w-6 text-white" />
+                </Link>
+                
+                <Link
+                  href="/users"
+                  className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors group"
+                >
+                  <div className="flex items-center justify-center w-10 h-10 rounded-full bg-green-100 group-hover:bg-green-200 transition-colors">
+                    <Users className="h-5 w-5 text-green-600" />
                   </div>
                   <div className="flex-1">
-                    <p className="text-xs text-green-700 font-semibold uppercase tracking-wide mb-1">Email Address</p>
-                    <p className="text-lg text-gray-900 font-semibold break-all">
-                      {user.primaryEmailAddress?.emailAddress || "Not set"}
-                    </p>
+                    <p className="text-sm font-medium text-gray-900">Find People</p>
+                    <p className="text-xs text-gray-500">Start new conversations</p>
                   </div>
-                </div>
+                </Link>
               </div>
             </div>
 
             {/* About Section */}
-            <div className="bg-gray-50 rounded-2xl p-6 border border-gray-200">
-              <h3 className="text-sm font-semibold text-gray-900 mb-2">About</h3>
-              <p className="text-sm text-gray-600 leading-relaxed">
-                Your profile is managed securely through Clerk. Click the button above to update your personal information, security settings, and preferences.
+            <div className="bg-gray-50 rounded-2xl p-4 lg:p-6 border border-gray-200">
+              <h3 className="text-xs lg:text-sm font-semibold text-gray-900 mb-1.5 lg:mb-2">About TARS Chat</h3>
+              <p className="text-xs lg:text-sm text-gray-600 leading-relaxed">
+                A modern, real-time messaging platform built for seamless communication. Connect with friends, colleagues, and communities instantly.
               </p>
             </div>
           </div>

@@ -38,6 +38,7 @@ function MessagesPageContent() {
   const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
   const [listKey, setListKey] = useState(0);
   const [showSkeleton, setShowSkeleton] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Fetch data
   const conversations = useQuery(api.conversations.getUserConversations);
@@ -245,7 +246,11 @@ function MessagesPageContent() {
           <div className="hidden lg:flex lg:flex-col lg:h-full lg:w-80 lg:border-r lg:border-gray-100 lg:shrink-0">
             <ConversationListHeader />
             <div className="flex-1 overflow-y-auto">
-              <ConversationList selectedConversationId={conversationId} />
+              <ConversationList 
+                selectedConversationId={conversationId}
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+              />
             </div>
           </div>
           
@@ -279,7 +284,12 @@ function MessagesPageContent() {
                       ))}
                     </div>
                   ) : (
-                    <ConversationList key={listKey} selectedConversationId={conversationId} />
+                    <ConversationList 
+                      key={listKey} 
+                      selectedConversationId={conversationId}
+                      searchQuery={searchQuery}
+                      onSearchChange={setSearchQuery}
+                    />
                   )}
                 </div>
               </motion.div>

@@ -1,8 +1,10 @@
 "use client";
 
+import { useMemo } from "react";
 import { useQuery } from "convex/react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
+import { Search } from "lucide-react";
 import { api } from "@/convex/_generated/api";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -10,12 +12,15 @@ import { AnimatedButton, AnimatedBadge } from "@/components/ui/motion";
 import { getInitials } from "@/lib/utils/getInitials";
 import { formatTimestamp } from "@/lib/utils/formatTimestamp";
 import { truncateMessage } from "@/lib/utils/truncateMessage";
+import { useDebounce } from "@/lib/hooks/useDebounce";
 import { cn } from "@/lib/utils";
 import type { Id } from "@/convex/_generated/dataModel";
-import { NoConversationsEmpty } from "@/components/features/empty-states";
+import { NoConversationsEmpty, NoSearchResultsEmpty } from "@/components/features/empty-states";
 
 interface ConversationListProps {
   selectedConversationId: Id<"conversations"> | null;
+  searchQuery?: string;
+  onSearchChange: (query: string) => void;
 }
 
 interface ConversationItemProps {
@@ -134,21 +139,39 @@ function ConversationItem({ conversation, isSelected, index }: ConversationItemP
   );
 }
 
-export function ConversationList({ selectedConversationId }: ConversationListProps) {
+export function ConversationList({ selectedConversationId, searchQuery = "", onSearchChange }: ConversationListProps) {
   const conversations = useQuery(api.conversations.getUserConversations);
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
+
+  // Filter conversations by user name or message content
+  const filteredConversations = useMemo(() => {
+    if (!conversations || !debouncedSearchQuery.trim()) return conversations;
+    
+    const query = debouncedSearchQuery.toLowerCase().trim();
+    return conversations.filter((conversation) => {
+      const nameMatch = conversation.otherUser.name.toLowerCase().includes(query);
+      const messageMatch = conversation.latestMessage?.content.toLowerCase().includes(query);
+      return nameMatch || messageMatch;
+    });
+  }, [conversations, debouncedSearchQuery]);
 
   if (conversations === undefined) {
     return (
-      <div className="flex flex-col">
-        {[...Array(8)].map((_, i) => (
-          <div key={i} className="flex items-center gap-4 px-4 py-4">
-            <Skeleton className="h-14 w-14 rounded-full shrink-0" />
-            <div className="flex-1 space-y-2">
-              <Skeleton className="h-4 w-32" />
-              <Skeleton className="h-3 w-48" />
+      <div className="flex flex-col h-full">
+        <div className="p-4">
+          <Skeleton className="h-10 w-full rounded-xl" />
+        </div>
+        <div className="flex-1 overflow-y-auto px-4 space-y-2">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="flex items-center gap-4 p-4">
+              <Skeleton className="h-14 w-14 rounded-full shrink-0" />
+              <div className="flex-1 space-y-2">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-3 w-48" />
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     );
   }
@@ -171,16 +194,57 @@ export function ConversationList({ selectedConversationId }: ConversationListPro
     return <NoConversationsEmpty onStartConversation={() => {}} />;
   }
 
+  // Show empty state when search has no results
+  if (filteredConversations && filteredConversations.length === 0 && searchQuery.trim()) {
+    return (
+      <div className="flex flex-col h-full">
+        <div className="p-4">
+          <div className="relative">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search conversations..."
+              value={searchQuery}
+              onChange={(e) => onSearchChange(e.target.value)}
+              className="w-full rounded-xl border border-gray-200 bg-gray-50 py-2.5 pl-10 pr-4 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+            />
+          </div>
+        </div>
+        <div className="flex flex-1 items-center justify-center p-4">
+          <NoSearchResultsEmpty
+            searchQuery={searchQuery}
+            onClearSearch={() => onSearchChange("")}
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-col">
-      {conversations.map((conversation, index) => (
-        <ConversationItem
-          key={conversation._id}
-          conversation={conversation}
-          isSelected={selectedConversationId === conversation._id}
-          index={index}
-        />
-      ))}
+    <div className="flex flex-col h-full">
+      <div className="p-4">
+        <div className="relative">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search conversations..."
+            value={searchQuery}
+            onChange={(e) => onSearchChange(e.target.value)}
+            className="w-full rounded-xl border border-gray-200 bg-gray-50 py-2.5 pl-10 pr-4 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+          />
+        </div>
+      </div>
+      
+      <div className="flex-1 overflow-y-auto px-2 pb-4">
+        {(filteredConversations || conversations).map((conversation, index) => (
+          <ConversationItem
+            key={conversation._id}
+            conversation={conversation}
+            isSelected={selectedConversationId === conversation._id}
+            index={index}
+          />
+        ))}
+      </div>
     </div>
   );
 }
