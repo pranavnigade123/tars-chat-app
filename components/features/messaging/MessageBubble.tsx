@@ -76,15 +76,6 @@ export function MessageBubble({
     }
   }, [shouldShowBadge, messageId]);
 
-  // Close menu when clicking outside
-  useEffect(() => {
-    if (showDeleteMenu) {
-      const handleClickOutside = () => setShowDeleteMenu(false);
-      document.addEventListener('click', handleClickOutside);
-      return () => document.removeEventListener('click', handleClickOutside);
-    }
-  }, [showDeleteMenu]);
-
   // Handle long press for mobile
   const handleTouchStart = (e: React.TouchEvent) => {
     if (!isCurrentUser || isDeleted || isSelectMode) return;
