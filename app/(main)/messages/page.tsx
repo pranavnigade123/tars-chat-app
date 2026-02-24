@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, Suspense, useState, useCallback } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useUser } from "@clerk/nextjs";
 import { redirect, useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useQuery, useMutation } from "convex/react";
@@ -39,6 +39,7 @@ function MessagesPageContent() {
   const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
 
   // Fetch data
+  const conversations = useQuery(api.conversations.getUserConversations);
   const messages = useQuery(
     api.messages.getMessages,
     conversationId ? { conversationId } : "skip"
@@ -194,23 +195,62 @@ function MessagesPageContent() {
         </div>
 
         {/* Main Content Area */}
-        <div className="flex flex-col lg:flex-row flex-1 overflow-hidden">
-          {/* Conversation List Screen */}
-          <div
-            className={cn(
-              "flex flex-col h-full lg:w-80 lg:border-r lg:border-gray-100 lg:shrink-0",
-              conversationId ? "hidden lg:flex" : "flex"
-            )}
-          >
+        <div className="flex flex-col lg:flex-row flex-1 overflow-hidden relative">
+          {/* Desktop: Always show conversation list */}
+          <div className="hidden lg:flex lg:flex-col lg:h-full lg:w-80 lg:border-r lg:border-gray-100 lg:shrink-0">
             <ConversationListHeader />
-            <div className="flex-1 overflow-y-auto pb-20 lg:pb-0">
+            <div className="flex-1 overflow-y-auto">
               <ConversationList selectedConversationId={conversationId} />
             </div>
           </div>
-
-        {/* Chat Screen */}
-        {conversationId && (
-          <div className="flex flex-col h-full lg:flex-1 lg:bg-gray-50 relative">
+          
+          {/* Mobile: Animated screens */}
+          <AnimatePresence mode="wait" initial={false}>
+            {!conversationId ? (
+              <motion.div
+                key="conversation-list"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{
+                  type: "spring",
+                  stiffness: 300,
+                  damping: 30,
+                }}
+                className="flex flex-col h-full w-full absolute inset-0 lg:hidden"
+              >
+                <ConversationListHeader />
+                <div className="flex-1 overflow-y-auto pb-20">
+                  {conversations === undefined ? (
+                    <div className="flex flex-col">
+                      {[...Array(8)].map((_, i) => (
+                        <div key={i} className="flex items-center gap-4 px-4 py-4">
+                          <Skeleton className="h-14 w-14 rounded-full shrink-0" />
+                          <div className="flex-1 space-y-2">
+                            <Skeleton className="h-4 w-32" />
+                            <Skeleton className="h-3 w-48" />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <ConversationList selectedConversationId={conversationId} />
+                  )}
+                </div>
+              </motion.div>
+            ) : conversationId ? (
+              <motion.div
+                key={conversationId}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                transition={{
+                  type: "spring",
+                  stiffness: 300,
+                  damping: 30,
+                }}
+                className="flex flex-col h-full w-full lg:flex-1 lg:bg-gray-50 absolute inset-0 lg:relative"
+              >
             <ChatHeader
               name={conversation?.otherUser?.name || "Loading..."}
               profileImage={conversation?.otherUser?.profileImage}
@@ -224,7 +264,11 @@ function MessagesPageContent() {
             />
 
             {/* Messages - with proper mobile padding for fixed input */}
-            <div
+            <motion.div
+              key={`messages-${conversationId}`}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.3 }}
               ref={scrollContainerRef}
               className="flex-1 overflow-y-auto px-4 py-4 bg-white pb-[calc(env(safe-area-inset-bottom)+90px)] lg:pb-4"
             >
@@ -244,6 +288,7 @@ function MessagesPageContent() {
               ) : (
                 <div className="space-y-3">
                   {messages.map((message, index) => {
+                    const messageDelay = Math.min(index * 0.03, 0.3);
                     const isCurrentUser = message.senderId === user.id;
                     const prevMessage = index > 0 ? messages[index - 1] : null;
                     const nextMessage = index < messages.length - 1 ? messages[index + 1] : null;
@@ -271,14 +316,28 @@ function MessagesPageContent() {
                     };
 
                     return (
-                      <div key={message._id}>
+                      <motion.div
+                        key={message._id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{
+                          duration: 0.3,
+                          delay: messageDelay,
+                          ease: "easeOut",
+                        }}
+                      >
                         {/* Date Separator */}
                         {showDateSeparator && (
-                          <div className="flex items-center justify-center my-4">
+                          <motion.div
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ duration: 0.4, ease: "easeOut" }}
+                            className="flex items-center justify-center my-4"
+                          >
                             <div className="bg-gray-100 text-gray-600 text-xs font-medium px-3 py-1 rounded-full">
                               {getDateLabel(message.sentAt)}
                             </div>
-                          </div>
+                          </motion.div>
                         )}
                         
                         {/* Message Bubble */}
@@ -335,7 +394,7 @@ function MessagesPageContent() {
                             isSelectMode={isSelectMode}
                           />
                         </div>
-                      </div>
+                      </motion.div>
                     );
                   })}
                 </div>
@@ -345,7 +404,7 @@ function MessagesPageContent() {
                 show={showNewMessagesButton}
                 onClick={() => scrollToBottom(true)}
               />
-            </div>
+            </motion.div>
 
             {/* Typing Indicator - Fixed position above input */}
             <div className="absolute bottom-[calc(env(safe-area-inset-bottom)+68px)] left-0 right-0 lg:bottom-[68px] pointer-events-none z-10">
@@ -359,8 +418,33 @@ function MessagesPageContent() {
                 onMessageSent={handleMessageSent}
               />
             </div>
-          </div>
-        )}
+          </motion.div>
+            ) : null}
+          </AnimatePresence>
+          
+          {/* Desktop: Empty state when no chat selected */}
+          {!conversationId && (
+            <div className="hidden lg:flex lg:flex-1 lg:items-center lg:justify-center lg:bg-gray-50">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.3 }}
+                className="text-center p-8"
+              >
+                <div className="mb-4">
+                  <div className="inline-block rounded-2xl bg-white p-6 shadow-sm">
+                    <MessageSquare className="h-12 w-12 text-gray-300" strokeWidth={1.5} />
+                  </div>
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  Select a conversation
+                </h3>
+                <p className="text-sm text-gray-500 max-w-xs mx-auto">
+                  Choose a conversation from the list to start messaging
+                </p>
+              </motion.div>
+            </div>
+          )}
         </div>
       </div>
 

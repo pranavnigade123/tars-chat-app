@@ -2,6 +2,7 @@
 
 import { useQuery } from "convex/react";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 import { api } from "@/convex/_generated/api";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -32,9 +33,10 @@ interface ConversationItemProps {
     } | null;
   };
   isSelected: boolean;
+  index: number;
 }
 
-function ConversationItem({ conversation, isSelected }: ConversationItemProps) {
+function ConversationItem({ conversation, isSelected, index }: ConversationItemProps) {
   const router = useRouter();
   const typingUsers = useQuery(api.typingStates.getTypingState, {
     conversationId: conversation._id,
@@ -53,7 +55,16 @@ function ConversationItem({ conversation, isSelected }: ConversationItemProps) {
   };
 
   return (
-    <AnimatedButton
+    <motion.div
+      initial={{ opacity: 0, x: -20 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{
+        duration: 0.3,
+        delay: index * 0.05,
+        ease: "easeOut",
+      }}
+    >
+      <AnimatedButton
       onClick={handleClick}
       scaleOnTap={true}
       scaleOnHover={false}
@@ -119,6 +130,7 @@ function ConversationItem({ conversation, isSelected }: ConversationItemProps) {
         </div>
       </div>
     </AnimatedButton>
+    </motion.div>
   );
 }
 
@@ -161,11 +173,12 @@ export function ConversationList({ selectedConversationId }: ConversationListPro
 
   return (
     <div className="flex flex-col">
-      {conversations.map((conversation) => (
+      {conversations.map((conversation, index) => (
         <ConversationItem
           key={conversation._id}
           conversation={conversation}
           isSelected={selectedConversationId === conversation._id}
+          index={index}
         />
       ))}
     </div>

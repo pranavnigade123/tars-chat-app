@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { MessageCircle, Send } from "lucide-react";
+import { MessageCircle } from "lucide-react";
 
 interface NoMessagesEmptyProps {
   otherParticipantName: string;
@@ -12,46 +12,30 @@ export function NoMessagesEmpty({
 }: NoMessagesEmptyProps) {
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: "easeOut" }}
-      className="flex flex-col items-center justify-center p-8 sm:p-12 text-center min-h-[60vh]"
+      className="flex flex-col items-center justify-center p-8 text-center min-h-[50vh]"
     >
-      {/* Illustration */}
+      {/* Icon */}
       <motion.div
-        initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
-        transition={{ delay: 0.2, type: "spring", stiffness: 200, damping: 15 }}
-        className="relative mb-8"
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ delay: 0.1, duration: 0.3 }}
+        className="mb-4"
       >
-        <div className="rounded-3xl bg-gradient-to-br from-green-50 to-green-100 p-8 sm:p-10">
-          <MessageCircle className="h-16 w-16 sm:h-20 sm:w-20 text-green-600" strokeWidth={1.5} />
-        </div>
-        <div className="absolute -bottom-2 -right-2 rounded-full bg-blue-600 p-2 shadow-lg">
-          <Send className="h-4 w-4 text-white" />
+        <div className="rounded-2xl bg-gray-100 p-5">
+          <MessageCircle className="h-10 w-10 text-gray-400" strokeWidth={1.5} />
         </div>
       </motion.div>
       
       {/* Content */}
-      <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3">
-        Start the conversation
+      <h3 className="text-base font-semibold text-gray-900 mb-2">
+        No messages yet
       </h3>
-      <p className="text-sm sm:text-base text-gray-600 mb-4 max-w-sm leading-relaxed">
-        Say hello to <span className="font-semibold text-gray-900">{otherParticipantName}</span> and break the ice!
+      <p className="text-sm text-gray-500 max-w-xs">
+        Start the conversation with {otherParticipantName}
       </p>
-      
-      {/* Suggestions */}
-      <div className="flex flex-wrap gap-2 justify-center mt-4">
-        <div className="px-3 py-1.5 bg-gray-100 text-gray-700 text-xs rounded-full">
-          👋 Hey there!
-        </div>
-        <div className="px-3 py-1.5 bg-gray-100 text-gray-700 text-xs rounded-full">
-          How's it going?
-        </div>
-        <div className="px-3 py-1.5 bg-gray-100 text-gray-700 text-xs rounded-full">
-          Nice to meet you
-        </div>
-      </div>
     </motion.div>
   );
 }
