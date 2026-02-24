@@ -1,5 +1,6 @@
 "use client";
 
+import { motion } from "framer-motion";
 import { ArrowLeft, CheckSquare, Trash2, X } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/utils/getInitials";
@@ -28,7 +29,12 @@ export function ChatHeader({
   onBulkDelete
 }: ChatHeaderProps) {
   return (
-    <header className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-gray-100">
+    <motion.header
+      initial={{ y: -20, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ duration: 0.3, ease: "easeOut" }}
+      className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-gray-100"
+    >
       <div className="flex items-center gap-3 px-4 py-3">
         <button
           onClick={onBack}
@@ -89,6 +95,6 @@ export function ChatHeader({
           )}
         </div>
       </div>
-    </header>
+    </motion.header>
   );
 }

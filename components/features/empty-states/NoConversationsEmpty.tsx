@@ -1,5 +1,6 @@
 "use client";
 
+import { motion } from "framer-motion";
 import { MessageSquare, Users, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -17,16 +18,26 @@ export function NoConversationsEmpty({
   };
 
   return (
-    <div className="flex flex-col items-center justify-center p-8 sm:p-12 text-center min-h-[60vh]">
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
+      className="flex flex-col items-center justify-center p-8 sm:p-12 text-center min-h-[60vh]"
+    >
       {/* Illustration */}
-      <div className="relative mb-8">
+      <motion.div
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        transition={{ delay: 0.2, type: "spring", stiffness: 200, damping: 15 }}
+        className="relative mb-8"
+      >
         <div className="rounded-3xl bg-gradient-to-br from-blue-50 to-blue-100 p-8 sm:p-10">
           <MessageSquare className="h-16 w-16 sm:h-20 sm:w-20 text-blue-600" strokeWidth={1.5} />
         </div>
         <div className="absolute -top-2 -right-2 rounded-full bg-yellow-400 p-2 shadow-lg">
           <Sparkles className="h-5 w-5 text-white" fill="currentColor" />
         </div>
-      </div>
+      </motion.div>
       
       {/* Content */}
       <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3">
@@ -49,6 +60,6 @@ export function NoConversationsEmpty({
       <p className="mt-6 text-xs text-gray-400">
         Browse users and start your first conversation
       </p>
-    </div>
+    </motion.div>
   );
 }

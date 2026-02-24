@@ -1,5 +1,6 @@
 "use client";
 
+import { motion } from "framer-motion";
 import { MessageCircle, Send } from "lucide-react";
 
 interface NoMessagesEmptyProps {
@@ -10,16 +11,26 @@ export function NoMessagesEmpty({
   otherParticipantName,
 }: NoMessagesEmptyProps) {
   return (
-    <div className="flex flex-col items-center justify-center p-8 sm:p-12 text-center min-h-[60vh]">
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
+      className="flex flex-col items-center justify-center p-8 sm:p-12 text-center min-h-[60vh]"
+    >
       {/* Illustration */}
-      <div className="relative mb-8">
+      <motion.div
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        transition={{ delay: 0.2, type: "spring", stiffness: 200, damping: 15 }}
+        className="relative mb-8"
+      >
         <div className="rounded-3xl bg-gradient-to-br from-green-50 to-green-100 p-8 sm:p-10">
           <MessageCircle className="h-16 w-16 sm:h-20 sm:w-20 text-green-600" strokeWidth={1.5} />
         </div>
         <div className="absolute -bottom-2 -right-2 rounded-full bg-blue-600 p-2 shadow-lg">
           <Send className="h-4 w-4 text-white" />
         </div>
-      </div>
+      </motion.div>
       
       {/* Content */}
       <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3">
@@ -41,6 +52,6 @@ export function NoMessagesEmpty({
           Nice to meet you
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

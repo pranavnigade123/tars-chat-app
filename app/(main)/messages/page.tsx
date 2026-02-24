@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, Suspense } from "react";
+import { useEffect, useRef, Suspense, useState, useCallback } from "react";
+import { motion } from "framer-motion";
 import { useUser } from "@clerk/nextjs";
 import { redirect, useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useQuery, useMutation } from "convex/react";
@@ -20,7 +21,6 @@ import { useMessageVisibility } from "@/lib/hooks/useMessageVisibility";
 import { getDateLabel, isDifferentDay } from "@/lib/utils/timestamp";
 import { cn } from "@/lib/utils";
 import type { Id } from "@/convex/_generated/dataModel";
-import { useCallback, useState } from "react";
 import Link from "next/link";
 import { MessageSquare, Users, User } from "lucide-react";
 
@@ -36,6 +36,7 @@ function MessagesPageContent() {
   const scrollToBottomRef = useRef<(() => void) | null>(null);
   const [isSelectMode, setIsSelectMode] = useState(false);
   const [selectedMessages, setSelectedMessages] = useState<Set<Id<"messages">>>(new Set());
+  const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
 
   // Fetch data
   const messages = useQuery(
@@ -128,10 +129,10 @@ function MessagesPageContent() {
 
   const handleBulkDelete = async () => {
     if (selectedMessages.size === 0) return;
-    
-    const confirmed = window.confirm(`Delete ${selectedMessages.size} message${selectedMessages.size > 1 ? 's' : ''}?`);
-    if (!confirmed) return;
+    setShowBulkDeleteDialog(true);
+  };
 
+  const confirmBulkDelete = async () => {
     try {
       await Promise.all(
         Array.from(selectedMessages).map(messageId => 
@@ -140,6 +141,7 @@ function MessagesPageContent() {
       );
       setSelectedMessages(new Set());
       setIsSelectMode(false);
+      setShowBulkDeleteDialog(false);
     } catch (error) {
       console.error("Failed to delete messages:", error);
       alert("Failed to delete some messages. Please try again.");
@@ -364,6 +366,49 @@ function MessagesPageContent() {
 
       {/* Bottom Navigation - Mobile Only - Hidden when in chat */}
       {!conversationId && <BottomNav />}
+      
+      {/* Bulk Delete Dialog */}
+      {showBulkDeleteDialog && (
+        <>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 z-40 bg-black/10 backdrop-blur-[2px]"
+            onClick={() => setShowBulkDeleteDialog(false)}
+          />
+          
+          {/* Dialog */}
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0, y: 10 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.9, opacity: 0, y: 10 }}
+            transition={{
+              type: "spring",
+              stiffness: 400,
+              damping: 25,
+            }}
+            className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl shadow-2xl border border-gray-200 p-4 z-50 w-[280px] max-w-[90vw]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p className="text-sm text-gray-800 mb-4 font-medium">
+              Delete {selectedMessages.size} message{selectedMessages.size > 1 ? 's' : ''}?
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={confirmBulkDelete}
+                className="flex-1 bg-red-500 text-white text-sm px-4 py-2.5 rounded-lg hover:bg-red-600 active:scale-95 transition-all font-medium shadow-sm"
+              >
+                Delete
+              </button>
+              <button
+                onClick={() => setShowBulkDeleteDialog(false)}
+                className="flex-1 bg-gray-100 text-gray-700 text-sm px-4 py-2.5 rounded-lg hover:bg-gray-200 active:scale-95 transition-all font-medium"
+              >
+                Cancel
+              </button>
+            </div>
+          </motion.div>
+        </>
+      )}
     </>
   );
 }
