@@ -1,8 +1,10 @@
 "use client";
 
+import { useMemo } from "react";
 import { useQuery } from "convex/react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
+import { Search } from "lucide-react";
 import { api } from "@/convex/_generated/api";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -10,12 +12,15 @@ import { AnimatedButton, AnimatedBadge } from "@/components/ui/motion";
 import { getInitials } from "@/lib/utils/getInitials";
 import { formatTimestamp } from "@/lib/utils/formatTimestamp";
 import { truncateMessage } from "@/lib/utils/truncateMessage";
+import { useDebounce } from "@/lib/hooks/useDebounce";
 import { cn } from "@/lib/utils";
 import type { Id } from "@/convex/_generated/dataModel";
-import { NoConversationsEmpty } from "@/components/features/empty-states";
+import { NoConversationsEmpty, NoSearchResultsEmpty } from "@/components/features/empty-states";
 
 interface ConversationListProps {
   selectedConversationId: Id<"conversations"> | null;
+  searchQuery?: string;
+  onSearchChange: (query: string) => void;
 }
 
 interface ConversationItemProps {
@@ -69,40 +74,40 @@ function ConversationItem({ conversation, isSelected, index }: ConversationItemP
       scaleOnTap={true}
       scaleOnHover={false}
       className={cn(
-        "w-full flex items-center gap-4 px-4 py-4 transition-colors text-left",
+        "w-full flex items-center gap-3 px-3 py-3 lg:gap-4 lg:px-4 lg:py-4 transition-colors text-left",
         isSelected 
           ? "bg-gray-50" 
           : "hover:bg-gray-50/50"
       )}
     >
       <div className="relative shrink-0">
-        <Avatar className="h-14 w-14">
+        <Avatar className="h-12 w-12 lg:h-14 lg:w-14">
           <AvatarImage
             src={conversation.otherUser.profileImage}
             alt={conversation.otherUser.name}
           />
-          <AvatarFallback className="bg-gray-200 text-gray-700 text-base font-medium">
+          <AvatarFallback className="bg-gray-200 text-gray-700 text-sm lg:text-base font-medium">
             {getInitials(conversation.otherUser.name)}
           </AvatarFallback>
         </Avatar>
         {isOnline && (
           <div 
-            className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full bg-green-500 ring-2 ring-white"
+            className="absolute bottom-0 right-0 h-3 w-3 lg:h-3.5 lg:w-3.5 rounded-full bg-green-500 ring-2 ring-white"
             aria-label="Online"
           />
         )}
       </div>
 
       <div className="flex-1 min-w-0">
-        <div className="flex items-baseline justify-between gap-2 mb-1">
+        <div className="flex items-baseline justify-between gap-2 mb-0.5 lg:mb-1">
           <h3 className={cn(
-            "font-semibold truncate text-[15px]",
+            "font-semibold truncate text-sm lg:text-[15px]",
             hasUnread ? "text-gray-900" : "text-gray-800"
           )}>
             {conversation.otherUser.name}
           </h3>
           {conversation.latestMessage && !isTyping && (
-            <span className="text-xs text-gray-500 shrink-0">
+            <span className="text-[11px] lg:text-xs text-gray-500 shrink-0">
               {formatTimestamp(conversation.latestMessage.sentAt, "preview")}
             </span>
           )}
@@ -110,7 +115,7 @@ function ConversationItem({ conversation, isSelected, index }: ConversationItemP
         
         <div className="flex items-center gap-2">
           <p className={cn(
-            "text-sm truncate flex-1",
+            "text-xs lg:text-sm truncate flex-1",
             hasUnread ? "text-gray-900 font-medium" : "text-gray-500"
           )}>
             {isTyping ? (
@@ -123,7 +128,7 @@ function ConversationItem({ conversation, isSelected, index }: ConversationItemP
           </p>
           
           {hasUnread && (
-            <AnimatedBadge className="shrink-0 min-w-[20px] h-5 px-1.5 rounded-full bg-blue-600 text-white text-xs flex items-center justify-center font-semibold">
+            <AnimatedBadge className="shrink-0 min-w-[18px] h-[18px] lg:min-w-[20px] lg:h-5 px-1.5 rounded-full bg-blue-600 text-white text-[10px] lg:text-xs flex items-center justify-center font-semibold">
               {unreadCount > 99 ? '99+' : unreadCount}
             </AnimatedBadge>
           )}
@@ -134,21 +139,39 @@ function ConversationItem({ conversation, isSelected, index }: ConversationItemP
   );
 }
 
-export function ConversationList({ selectedConversationId }: ConversationListProps) {
+export function ConversationList({ selectedConversationId, searchQuery = "", onSearchChange }: ConversationListProps) {
   const conversations = useQuery(api.conversations.getUserConversations);
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
+
+  // Filter conversations by user name or message content
+  const filteredConversations = useMemo(() => {
+    if (!conversations || !debouncedSearchQuery.trim()) return conversations;
+    
+    const query = debouncedSearchQuery.toLowerCase().trim();
+    return conversations.filter((conversation) => {
+      const nameMatch = conversation.otherUser.name.toLowerCase().includes(query);
+      const messageMatch = conversation.latestMessage?.content.toLowerCase().includes(query);
+      return nameMatch || messageMatch;
+    });
+  }, [conversations, debouncedSearchQuery]);
 
   if (conversations === undefined) {
     return (
-      <div className="flex flex-col">
-        {[...Array(8)].map((_, i) => (
-          <div key={i} className="flex items-center gap-4 px-4 py-4">
-            <Skeleton className="h-14 w-14 rounded-full shrink-0" />
-            <div className="flex-1 space-y-2">
-              <Skeleton className="h-4 w-32" />
-              <Skeleton className="h-3 w-48" />
+      <div className="flex flex-col h-full">
+        <div className="p-4">
+          <Skeleton className="h-10 w-full rounded-xl" />
+        </div>
+        <div className="flex-1 overflow-y-auto px-4 space-y-2">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="flex items-center gap-4 p-4">
+              <Skeleton className="h-14 w-14 rounded-full shrink-0" />
+              <div className="flex-1 space-y-2">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-3 w-48" />
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     );
   }
@@ -171,16 +194,57 @@ export function ConversationList({ selectedConversationId }: ConversationListPro
     return <NoConversationsEmpty onStartConversation={() => {}} />;
   }
 
+  // Show empty state when search has no results
+  if (filteredConversations && filteredConversations.length === 0 && searchQuery.trim()) {
+    return (
+      <div className="flex flex-col h-full">
+        <div className="p-4">
+          <div className="relative">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search conversations..."
+              value={searchQuery}
+              onChange={(e) => onSearchChange(e.target.value)}
+              className="w-full rounded-xl border border-gray-200 bg-gray-50 py-2.5 pl-10 pr-4 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+            />
+          </div>
+        </div>
+        <div className="flex flex-1 items-center justify-center p-4">
+          <NoSearchResultsEmpty
+            searchQuery={searchQuery}
+            onClearSearch={() => onSearchChange("")}
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-col">
-      {conversations.map((conversation, index) => (
-        <ConversationItem
-          key={conversation._id}
-          conversation={conversation}
-          isSelected={selectedConversationId === conversation._id}
-          index={index}
-        />
-      ))}
+    <div className="flex flex-col h-full">
+      <div className="p-4">
+        <div className="relative">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search conversations..."
+            value={searchQuery}
+            onChange={(e) => onSearchChange(e.target.value)}
+            className="w-full rounded-xl border border-gray-200 bg-gray-50 py-2.5 pl-10 pr-4 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+          />
+        </div>
+      </div>
+      
+      <div className="flex-1 overflow-y-auto px-2 pb-4">
+        {(filteredConversations || conversations).map((conversation, index) => (
+          <ConversationItem
+            key={conversation._id}
+            conversation={conversation}
+            isSelected={selectedConversationId === conversation._id}
+            index={index}
+          />
+        ))}
+      </div>
     </div>
   );
 }
