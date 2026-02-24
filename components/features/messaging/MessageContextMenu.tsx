@@ -114,7 +114,7 @@ export function MessageContextMenu({
                 e.preventDefault();
                 handleReaction(emoji);
               }}
-              className="text-[24px] p-1.5 rounded-full hover:bg-gray-100 active:bg-gray-100 transition-colors"
+              className="text-[20px] p-1.5 rounded-full hover:bg-gray-100 active:bg-gray-100 transition-colors"
             >
               {emoji}
             </motion.button>

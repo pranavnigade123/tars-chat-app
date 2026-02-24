@@ -193,7 +193,7 @@ export function MessageBubble({
       >
         <motion.div
           ref={bubbleRef}
-          className="relative"
+          className="relative select-none"
           animate={{
             scale: context.isOpen ? 1.05 : 1,
           }}
@@ -201,6 +201,9 @@ export function MessageBubble({
           style={{
             transformOrigin: isCurrentUser ? 'right center' : 'left center',
             zIndex: context.isOpen ? 45 : 'auto',
+            WebkitUserSelect: 'none',
+            userSelect: 'none',
+            WebkitTouchCallout: 'none',
           }}
         >
           {/* NEW badge - shows for 2 seconds only */}
@@ -286,15 +289,15 @@ export function MessageBubble({
                 key={emoji}
                 onClick={() => onReaction?.(emoji)}
                 className={cn(
-                  "flex items-center gap-1 px-2 py-0.5 rounded-full text-xs transition-all",
+                  "flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs transition-all",
                   data.hasCurrentUser
                     ? "bg-blue-100 border border-blue-300 hover:bg-blue-200"
                     : "bg-gray-100 border border-gray-200 hover:bg-gray-200"
                 )}
               >
-                <span className="text-sm">{emoji}</span>
+                <span className="text-[13px]">{emoji}</span>
                 <span className={cn(
-                  "font-medium",
+                  "font-medium text-[11px]",
                   data.hasCurrentUser ? "text-blue-700" : "text-gray-700"
                 )}>
                   {data.count}
