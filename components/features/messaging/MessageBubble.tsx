@@ -89,6 +89,9 @@ export function MessageBubble({
   const handleTouchStart = (e: React.TouchEvent) => {
     if (!isCurrentUser || isDeleted || isSelectMode) return;
     
+    // Prevent text selection on long press
+    e.preventDefault();
+    
     setIsLongPressing(true);
     longPressTimer.current = setTimeout(() => {
       setShowDeleteMenu(true);
@@ -127,6 +130,11 @@ export function MessageBubble({
         isCurrentUser ? "flex-row-reverse" : "flex-row",
         !isGroupedWithPrev && "mt-6"
       )}
+      style={{
+        WebkitUserSelect: isCurrentUser && !isDeleted && !isSelectMode ? 'none' : 'auto',
+        userSelect: isCurrentUser && !isDeleted && !isSelectMode ? 'none' : 'auto',
+        WebkitTouchCallout: 'none'
+      }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onContextMenu={handleContextMenu}
