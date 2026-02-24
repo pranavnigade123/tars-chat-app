@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useRef } from "react";
+import { motion } from "framer-motion";
 import { AnimatedDiv, AnimatedBadge } from "@/components/ui/motion";
 import { formatMessageTime } from "@/lib/utils/formatTimestamp";
 import { cn } from "@/lib/utils";
@@ -211,49 +212,69 @@ export function MessageBubble({
                 </div>
               </div>
             )}
-            
-            {/* Delete confirmation menu - centered modal */}
-            {showDeleteMenu && (
-              <AnimatedDiv
-                variant="scaleIn"
-                className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl shadow-2xl border border-gray-200 p-4 z-50 w-[280px] max-w-[90vw]"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <p className="text-sm text-gray-800 mb-4 font-medium">Delete this message?</p>
-                <div className="flex gap-2">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onDelete?.();
-                      setShowDeleteMenu(false);
-                    }}
-                    className="flex-1 bg-red-500 text-white text-sm px-4 py-2.5 rounded-lg hover:bg-red-600 active:scale-95 transition-all font-medium shadow-sm"
-                  >
-                    Delete
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowDeleteMenu(false);
-                    }}
-                    className="flex-1 bg-gray-100 text-gray-700 text-sm px-4 py-2.5 rounded-lg hover:bg-gray-200 active:scale-95 transition-all font-medium"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </AnimatedDiv>
-            )}
           </div>
         </div>
       </div>
       
-      {/* Backdrop when menu is open */}
+      {/* Delete confirmation menu and backdrop - outside message structure */}
       {showDeleteMenu && (
-        <AnimatedDiv
-          variant="fadeIn"
-          className="fixed inset-0 z-40 bg-black/10 backdrop-blur-[2px]" 
-          onClick={() => setShowDeleteMenu(false)}
-        />
+        <>
+          {/* Backdrop */}
+          <AnimatedDiv
+            variant="fadeIn"
+            className="fixed inset-0 z-40 bg-black/10 backdrop-blur-[2px]" 
+            onClick={() => setShowDeleteMenu(false)}
+            onTouchEnd={(e) => {
+              e.preventDefault();
+              setShowDeleteMenu(false);
+            }}
+          />
+          
+          {/* Dialog */}
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0, y: 10 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.9, opacity: 0, y: 10 }}
+            transition={{
+              type: "spring",
+              stiffness: 400,
+              damping: 25,
+            }}
+            className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl shadow-2xl border border-gray-200 p-4 z-50 w-[280px] max-w-[90vw]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p className="text-sm text-gray-800 mb-4 font-medium">Delete this message?</p>
+            <div className="flex gap-2">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete?.();
+                  setShowDeleteMenu(false);
+                }}
+                onTouchEnd={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                }}
+                className="flex-1 bg-red-500 text-white text-sm px-4 py-2.5 rounded-lg hover:bg-red-600 active:scale-95 transition-all font-medium shadow-sm"
+              >
+                Delete
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowDeleteMenu(false);
+                }}
+                onTouchEnd={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                }}
+                className="flex-1 bg-gray-100 text-gray-700 text-sm px-4 py-2.5 rounded-lg hover:bg-gray-200 active:scale-95 transition-all font-medium"
+              >
+                Cancel
+              </button>
+            </div>
+          </motion.div>
+        </>
       )}
     </AnimatedDiv>
   );
