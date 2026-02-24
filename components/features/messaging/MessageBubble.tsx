@@ -49,6 +49,7 @@ export function MessageBubble({
   const [showDeleteMenu, setShowDeleteMenu] = useState(false);
   const [isLongPressing, setIsLongPressing] = useState(false);
   const longPressTimer = useRef<NodeJS.Timeout | null>(null);
+  const deleteExecutedRef = useRef(false);
 
   // Determine if badge should be shown (only for unread messages from other users)
   const shouldShowBadge = useMemo(() => {
@@ -83,6 +84,7 @@ export function MessageBubble({
     
     setIsLongPressing(true);
     longPressTimer.current = setTimeout(() => {
+      deleteExecutedRef.current = false; // Reset flag when opening menu
       setShowDeleteMenu(true);
       setIsLongPressing(false);
     }, 500);
@@ -107,6 +109,7 @@ export function MessageBubble({
     if (!isCurrentUser || isDeleted || isSelectMode) return;
     
     e.preventDefault();
+    deleteExecutedRef.current = false; // Reset flag when opening menu
     setShowDeleteMenu(true);
   };
 
@@ -248,12 +251,18 @@ export function MessageBubble({
               <button
                 onClick={(e) => {
                   e.stopPropagation();
+                  if (deleteExecutedRef.current) return; // Prevent double execution
+                  deleteExecutedRef.current = true;
                   onDelete?.();
                   setShowDeleteMenu(false);
                 }}
                 onTouchEnd={(e) => {
                   e.stopPropagation();
                   e.preventDefault();
+                  if (deleteExecutedRef.current) return; // Prevent double execution
+                  deleteExecutedRef.current = true;
+                  onDelete?.();
+                  setShowDeleteMenu(false);
                 }}
                 className="flex-1 bg-red-500 text-white text-sm px-4 py-2.5 rounded-lg hover:bg-red-600 active:scale-95 transition-all font-medium shadow-sm"
               >
@@ -267,6 +276,7 @@ export function MessageBubble({
                 onTouchEnd={(e) => {
                   e.stopPropagation();
                   e.preventDefault();
+                  setShowDeleteMenu(false);
                 }}
                 className="flex-1 bg-gray-100 text-gray-700 text-sm px-4 py-2.5 rounded-lg hover:bg-gray-200 active:scale-95 transition-all font-medium"
               >
