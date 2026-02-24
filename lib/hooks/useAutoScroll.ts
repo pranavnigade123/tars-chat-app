@@ -80,20 +80,23 @@ export function useAutoScroll(
     }
   }, [checkIsAtBottom, enabled]);
 
-  // Reset scroll state and position when conversation changes
+  // Reset scroll state when conversation changes
   useEffect(() => {
     setIsAtBottom(true);
     setShowNewMessagesButton(false);
-    previousMessageCountRef.current = messageCount;
-    
-    // Immediately scroll to bottom without animation when conversation changes
-    if (scrollContainerRef.current) {
-      // Use requestAnimationFrame to ensure DOM is ready
-      requestAnimationFrame(() => {
+    previousMessageCountRef.current = 0;
+  }, [conversationId]);
+
+  // Simple: scroll to bottom after messages load
+  useEffect(() => {
+    if (messageCount > 0 && scrollContainerRef.current) {
+      // Wait a bit for render, then scroll once
+      const timer = setTimeout(() => {
         if (scrollContainerRef.current) {
           scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
         }
-      });
+      }, 100);
+      return () => clearTimeout(timer);
     }
   }, [conversationId, messageCount]);
 
