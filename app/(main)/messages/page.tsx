@@ -112,14 +112,7 @@ function MessagesPageContent() {
     }
   }, [conversationId, messages?.length, markMessagesAsRead]);
 
-  if (!isLoaded || !user) {
-    return (
-      <div className="flex h-dvh items-center justify-center bg-white">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
-      </div>
-    );
-  }
-
+  // All callbacks must be defined before early return
   const handleBackToList = useCallback(() => {
     router.push("/messages");
   }, [router]);
@@ -167,6 +160,15 @@ function MessagesPageContent() {
       alert("Failed to delete some messages. Please try again.");
     }
   }, [selectedMessages, deleteMessage]);
+
+  // Early return AFTER all hooks
+  if (!isLoaded || !user) {
+    return (
+      <div className="flex h-dvh items-center justify-center bg-white">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
+      </div>
+    );
+  }
 
   // Mobile-first layout: Stack screens, show one at a time
   // Desktop: Vertical sidebar nav + conversation list + chat
