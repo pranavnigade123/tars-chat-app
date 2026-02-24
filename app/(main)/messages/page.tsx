@@ -37,6 +37,7 @@ function MessagesPageContent() {
   const [isSelectMode, setIsSelectMode] = useState(false);
   const [selectedMessages, setSelectedMessages] = useState<Set<Id<"messages">>>(new Set());
   const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
+  const [listKey, setListKey] = useState(0);
 
   // Fetch data
   const conversations = useQuery(api.conversations.getUserConversations);
@@ -82,6 +83,13 @@ function MessagesPageContent() {
     }
   }, [isLoaded, user]);
 
+  // Trigger list animation when returning to conversation list
+  useEffect(() => {
+    if (!conversationId) {
+      setListKey(prev => prev + 1);
+    }
+  }, [conversationId]);
+
   // Bulk mark messages as read when conversation opens or new messages arrive
   useEffect(() => {
     if (conversationId && messages) {
@@ -101,22 +109,22 @@ function MessagesPageContent() {
     );
   }
 
-  const handleBackToList = () => {
+  const handleBackToList = useCallback(() => {
     router.push("/messages");
-  };
+  }, [router]);
 
-  const handleMessageSent = () => {
+  const handleMessageSent = useCallback(() => {
     if (scrollToBottomRef.current) {
       scrollToBottomRef.current();
     }
-  };
+  }, []);
 
-  const handleToggleSelectMode = () => {
+  const handleToggleSelectMode = useCallback(() => {
     setIsSelectMode(!isSelectMode);
     setSelectedMessages(new Set());
-  };
+  }, [isSelectMode]);
 
-  const handleToggleMessageSelect = (messageId: Id<"messages">) => {
+  const handleToggleMessageSelect = useCallback((messageId: Id<"messages">) => {
     setSelectedMessages(prev => {
       const newSet = new Set(prev);
       if (newSet.has(messageId)) {
@@ -126,14 +134,14 @@ function MessagesPageContent() {
       }
       return newSet;
     });
-  };
+  }, []);
 
-  const handleBulkDelete = async () => {
+  const handleBulkDelete = useCallback(async () => {
     if (selectedMessages.size === 0) return;
     setShowBulkDeleteDialog(true);
-  };
+  }, [selectedMessages.size]);
 
-  const confirmBulkDelete = async () => {
+  const confirmBulkDelete = useCallback(async () => {
     try {
       await Promise.all(
         Array.from(selectedMessages).map(messageId => 
@@ -147,7 +155,7 @@ function MessagesPageContent() {
       console.error("Failed to delete messages:", error);
       alert("Failed to delete some messages. Please try again.");
     }
-  };
+  }, [selectedMessages, deleteMessage]);
 
   // Mobile-first layout: Stack screens, show one at a time
   // Desktop: Vertical sidebar nav + conversation list + chat
@@ -214,7 +222,7 @@ function MessagesPageContent() {
                 exit={{ opacity: 0, x: -20 }}
                 transition={{
                   type: "spring",
-                  stiffness: 300,
+                  stiffness: 400,
                   damping: 30,
                 }}
                 className="flex flex-col h-full w-full absolute inset-0 lg:hidden"
@@ -234,7 +242,7 @@ function MessagesPageContent() {
                       ))}
                     </div>
                   ) : (
-                    <ConversationList selectedConversationId={conversationId} />
+                    <ConversationList key={listKey} selectedConversationId={conversationId} />
                   )}
                 </div>
               </motion.div>
@@ -246,10 +254,10 @@ function MessagesPageContent() {
                 exit={{ opacity: 0, x: 20 }}
                 transition={{
                   type: "spring",
-                  stiffness: 300,
-                  damping: 30,
+                  stiffness: 600,
+                  damping: 35,
                 }}
-                className="flex flex-col h-full w-full lg:flex-1 lg:bg-gray-50 absolute inset-0 lg:relative"
+                className="flex flex-col h-full w-full lg:flex-1 lg:bg-gray-50 absolute inset-0 lg:relative bg-white"
               >
             <ChatHeader
               name={conversation?.otherUser?.name || "Loading..."}
@@ -268,7 +276,7 @@ function MessagesPageContent() {
               key={`messages-${conversationId}`}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ duration: 0.3 }}
+              transition={{ duration: 0.2 }}
               ref={scrollContainerRef}
               className="flex-1 overflow-y-auto px-4 py-4 bg-white pb-[calc(env(safe-area-inset-bottom)+90px)] lg:pb-4"
             >
@@ -321,7 +329,7 @@ function MessagesPageContent() {
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{
-                          duration: 0.3,
+                          duration: 0.25,
                           delay: messageDelay,
                           ease: "easeOut",
                         }}
@@ -331,7 +339,7 @@ function MessagesPageContent() {
                           <motion.div
                             initial={{ opacity: 0, scale: 0.9 }}
                             animate={{ opacity: 1, scale: 1 }}
-                            transition={{ duration: 0.4, ease: "easeOut" }}
+                            transition={{ duration: 0.25, ease: "easeOut" }}
                             className="flex items-center justify-center my-4"
                           >
                             <div className="bg-gray-100 text-gray-600 text-xs font-medium px-3 py-1 rounded-full">

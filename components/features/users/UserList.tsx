@@ -125,12 +125,13 @@ export function UserList({ currentUserId }: UserListProps) {
       </div>
 
       <div className="flex-1 overflow-y-auto px-2 pb-4">
-        {filteredAndSortedUsers.map((user) => (
+        {filteredAndSortedUsers.map((user, index) => (
           <UserListItem
             key={user._id}
             user={user}
             onClick={() => handleUserSelect(user.clerkId)}
             isSelected={selectedUserId === user.clerkId}
+            index={index}
           />
         ))}
       </div>

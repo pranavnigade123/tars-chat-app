@@ -93,9 +93,10 @@ export function useAutoScroll(
     setShowNewMessagesButton(false);
     previousMessageCountRef.current = 0;
     
-    // Scroll to bottom on conversation change
+    // Scroll to bottom on conversation change - instant
     if (messageCount > 0) {
-      setTimeout(() => scrollToBottom(false), 100);
+      // Use requestAnimationFrame for immediate scroll after render
+      requestAnimationFrame(() => scrollToBottom(false));
     }
   }, [conversationId, messageCount, scrollToBottom]);
 

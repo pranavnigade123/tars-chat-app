@@ -2,6 +2,7 @@
 
 import { useUser } from "@clerk/nextjs";
 import { redirect, usePathname } from "next/navigation";
+import { motion } from "framer-motion";
 import { UserButton } from "@clerk/nextjs";
 import { UserList } from "@/components/features/users/UserList";
 import { BottomNav } from "@/components/features/navigation/BottomNav";
@@ -69,7 +70,17 @@ export default function UsersPage() {
         </div>
 
         {/* Main Content */}
-        <div className="flex flex-col flex-1 overflow-hidden">
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -20 }}
+          transition={{
+            type: "spring",
+            stiffness: 300,
+            damping: 30,
+          }}
+          className="flex flex-col flex-1 overflow-hidden"
+        >
           {/* Header */}
           <header className="sticky top-0 z-10 bg-white border-b border-gray-200">
             <div className="flex items-center justify-between px-4 py-3">
@@ -89,7 +100,7 @@ export default function UsersPage() {
             <UserList currentUserId={user.id} />
           </div>
         </main>
-        </div>
+        </motion.div>
       </div>
 
       {/* Bottom Navigation - Mobile Only */}
