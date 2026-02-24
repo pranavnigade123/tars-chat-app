@@ -46,7 +46,6 @@ export function MessageBubble({
   const [isHovered, setIsHovered] = useState(false);
   const [showNewBadge, setShowNewBadge] = useState(false);
   const [showDeleteMenu, setShowDeleteMenu] = useState(false);
-  const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
   const [isLongPressing, setIsLongPressing] = useState(false);
   const longPressTimer = useRef<NodeJS.Timeout | null>(null);
 
@@ -86,36 +85,12 @@ export function MessageBubble({
     }
   }, [showDeleteMenu]);
 
-  // Helper to calculate menu position that stays on screen
-  const calculateMenuPosition = (x: number, y: number) => {
-    const menuWidth = 200;
-    const menuHeight = 100;
-    
-    // Adjust if too far right
-    if (x + menuWidth / 2 > window.innerWidth) {
-      x = window.innerWidth - menuWidth / 2 - 20;
-    }
-    // Adjust if too far left
-    if (x - menuWidth / 2 < 0) {
-      x = menuWidth / 2 + 20;
-    }
-    // Adjust if too close to top
-    if (y - menuHeight - 20 < 0) {
-      y = menuHeight + 40;
-    }
-    
-    return { x, y };
-  };
-
   // Handle long press for mobile
   const handleTouchStart = (e: React.TouchEvent) => {
     if (!isCurrentUser || isDeleted || isSelectMode) return;
     
     setIsLongPressing(true);
     longPressTimer.current = setTimeout(() => {
-      const touch = e.touches[0];
-      const position = calculateMenuPosition(touch.clientX, touch.clientY);
-      setMenuPosition(position);
       setShowDeleteMenu(true);
       setIsLongPressing(false);
     }, 500);
@@ -140,8 +115,6 @@ export function MessageBubble({
     if (!isCurrentUser || isDeleted || isSelectMode) return;
     
     e.preventDefault();
-    const position = calculateMenuPosition(e.clientX, e.clientY);
-    setMenuPosition(position);
     setShowDeleteMenu(true);
   };
 
@@ -243,16 +216,11 @@ export function MessageBubble({
               </div>
             )}
             
-            {/* Delete confirmation menu - positioned at click/touch location */}
+            {/* Delete confirmation menu - centered modal */}
             {showDeleteMenu && (
               <AnimatedDiv
                 variant="scaleIn"
-                className="fixed bg-white rounded-xl shadow-2xl border border-gray-200 p-4 z-50 min-w-[200px] max-w-[280px]"
-                style={{
-                  left: `${menuPosition.x}px`,
-                  top: `${menuPosition.y}px`,
-                  transform: 'translate(-50%, -100%) translateY(-12px)'
-                }}
+                className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl shadow-2xl border border-gray-200 p-4 z-50 w-[280px] max-w-[90vw]"
                 onClick={(e) => e.stopPropagation()}
               >
                 <p className="text-sm text-gray-800 mb-4 font-medium">Delete this message?</p>
