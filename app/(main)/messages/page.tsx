@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, Suspense, useState, useCallback } from "react";
+import { useEffect, useRef, Suspense, useState, useCallback, useLayoutEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useUser } from "@clerk/nextjs";
 import { redirect, useSearchParams, useRouter, usePathname } from "next/navigation";
@@ -12,11 +12,9 @@ import { BottomNav } from "@/components/features/navigation/BottomNav";
 import { ConversationList } from "@/components/features/messaging/ConversationList";
 import { MessageBubble } from "@/components/features/messaging/MessageBubble";
 import { MessageInputRedesigned } from "@/components/features/messaging/MessageInputRedesigned";
-import { NewMessagesButton } from "@/components/features/messaging/NewMessagesButton";
 import { TypingIndicator } from "@/components/features/messaging/TypingIndicator";
 import { NoMessagesEmpty } from "@/components/features/empty-states";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useAutoScroll } from "@/lib/hooks/useAutoScroll";
 import { useMessageVisibility } from "@/lib/hooks/useMessageVisibility";
 import { getDateLabel, isDifferentDay } from "@/lib/utils/timestamp";
 import { cn } from "@/lib/utils";
@@ -52,19 +50,43 @@ function MessagesPageContent() {
     conversationId ? { conversationId } : "skip"
   );
 
-  // Auto-scroll hook
-  const {
-    scrollContainerRef,
-    showNewMessagesButton,
-    scrollToBottom,
-  } = useAutoScroll(messages?.length ?? 0, {
-    conversationId: conversationId,
-  });
+  // Aggressive scroll to bottom - tries many times to ensure it works
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  
+  // Scroll to MAXIMUM bottom when conversation changes
+  useEffect(() => {
+    if (!conversationId) return;
+    
+    const scrollToMaxBottom = () => {
+      if (scrollContainerRef.current) {
+        const container = scrollContainerRef.current;
+        // Set to a very large number to ensure we're at the absolute bottom
+        container.scrollTop = container.scrollHeight + 99999;
+      }
+    };
+    
+    // Try MANY times with various delays to catch any render timing
+    scrollToMaxBottom(); // Immediate
+    requestAnimationFrame(scrollToMaxBottom); // After paint
+    requestAnimationFrame(() => requestAnimationFrame(scrollToMaxBottom)); // Double RAF
+    
+    const timers = [
+      setTimeout(scrollToMaxBottom, 50),
+      setTimeout(scrollToMaxBottom, 100),
+      setTimeout(scrollToMaxBottom, 200),
+      setTimeout(scrollToMaxBottom, 300),
+      setTimeout(scrollToMaxBottom, 500),
+      setTimeout(scrollToMaxBottom, 700),
+      setTimeout(scrollToMaxBottom, 1000),
+    ];
+    
+    return () => timers.forEach(clearTimeout);
+  }, [conversationId]);
 
-  // Expose scrollToBottom to parent via ref
-  if (scrollToBottomRef) {
-    scrollToBottomRef.current = () => scrollToBottom(true);
-  }
+  // Expose scrollToBottom to parent via ref - DISABLED
+  // if (scrollToBottomRef) {
+  //   scrollToBottomRef.current = () => scrollToBottom(true);
+  // }
 
   // Mark message as read when visible
   const handleMessageVisible = useCallback((messageId: Id<"messages">) => {
@@ -119,9 +141,10 @@ function MessagesPageContent() {
   }, [router]);
 
   const handleMessageSent = useCallback(() => {
-    if (scrollToBottomRef.current) {
-      scrollToBottomRef.current();
-    }
+    // Scroll to bottom disabled
+    // if (scrollToBottomRef.current) {
+    //   scrollToBottomRef.current();
+    // }
   }, []);
 
   const handleToggleSelectMode = useCallback(() => {
@@ -429,10 +452,7 @@ function MessagesPageContent() {
                 </div>
               )}
 
-              <NewMessagesButton
-                show={showNewMessagesButton}
-                onClick={() => scrollToBottom(true)}
-              />
+              {/* NewMessagesButton - DISABLED */}
             </motion.div>
 
             {/* Typing Indicator - In the space between messages and input */}
