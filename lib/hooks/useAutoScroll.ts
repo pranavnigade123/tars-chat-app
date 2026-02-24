@@ -80,22 +80,15 @@ export function useAutoScroll(
     }
   }, [checkIsAtBottom, enabled]);
 
-  // Initial scroll on mount
-  useEffect(() => {
-    if (messageCount > 0) {
-      scrollToBottom(false);
-    }
-  }, []); // Only on mount
-
-  // Reset scroll state when conversation changes
+  // Reset scroll state and position when conversation changes
   useEffect(() => {
     setIsAtBottom(true);
     setShowNewMessagesButton(false);
-    previousMessageCountRef.current = 0;
+    previousMessageCountRef.current = messageCount;
     
-    // Scroll to bottom on conversation change - instant
-    if (messageCount > 0 && scrollContainerRef.current) {
-      // Use requestAnimationFrame for immediate scroll after render
+    // Immediately scroll to bottom without animation when conversation changes
+    if (scrollContainerRef.current) {
+      // Use requestAnimationFrame to ensure DOM is ready
       requestAnimationFrame(() => {
         if (scrollContainerRef.current) {
           scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;

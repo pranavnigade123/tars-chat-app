@@ -292,10 +292,13 @@ function MessagesPageContent() {
               animate={{ opacity: 1 }}
               transition={{ duration: 0.2 }}
               ref={scrollContainerRef}
-              className="flex-1 overflow-y-auto px-4 py-4 bg-white pb-[calc(env(safe-area-inset-bottom)+90px)] lg:pb-4"
+              className="flex-1 overflow-y-auto px-4 py-4 bg-white pb-[calc(env(safe-area-inset-bottom)+90px)] lg:pb-4 flex flex-col"
+              style={{ 
+                overflowAnchor: 'none',
+              }}
             >
               {messages === undefined && showSkeleton ? (
-                <div className="space-y-4">
+                <div className="space-y-4 mt-auto">
                   {[...Array(5)].map((_, i) => (
                     <div key={i} className={cn("flex gap-3", i % 2 === 0 ? "" : "flex-row-reverse")}>
                       <Skeleton className="h-8 w-8 rounded-full shrink-0" />
@@ -311,7 +314,7 @@ function MessagesPageContent() {
                   otherParticipantName={conversation?.otherUser?.name || "this user"}
                 />
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-3 mt-auto">
                   {messages.map((message, index) => {
                     const isCurrentUser = message.senderId === user.id;
                     const prevMessage = index > 0 ? messages[index - 1] : null;
