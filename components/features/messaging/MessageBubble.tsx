@@ -245,21 +245,26 @@ export function MessageBubble({
             }}
             className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl shadow-2xl border border-gray-200 p-4 z-50 w-[280px] max-w-[90vw]"
             onClick={(e) => e.stopPropagation()}
+            onTouchStart={(e) => e.stopPropagation()}
+            onTouchEnd={(e) => e.stopPropagation()}
           >
             <p className="text-sm text-gray-800 mb-4 font-medium">Delete this message?</p>
             <div className="flex gap-2">
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (deleteExecutedRef.current) return; // Prevent double execution
+                  if (deleteExecutedRef.current) return;
                   deleteExecutedRef.current = true;
                   onDelete?.();
                   setShowDeleteMenu(false);
                 }}
+                onTouchStart={(e) => {
+                  e.stopPropagation(); // Prevent touch from bubbling to message
+                }}
                 onTouchEnd={(e) => {
                   e.stopPropagation();
                   e.preventDefault();
-                  if (deleteExecutedRef.current) return; // Prevent double execution
+                  if (deleteExecutedRef.current) return;
                   deleteExecutedRef.current = true;
                   onDelete?.();
                   setShowDeleteMenu(false);
@@ -272,6 +277,9 @@ export function MessageBubble({
                 onClick={(e) => {
                   e.stopPropagation();
                   setShowDeleteMenu(false);
+                }}
+                onTouchStart={(e) => {
+                  e.stopPropagation(); // Prevent touch from bubbling to message
                 }}
                 onTouchEnd={(e) => {
                   e.stopPropagation();
