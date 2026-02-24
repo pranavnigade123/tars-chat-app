@@ -292,7 +292,7 @@ function MessagesPageContent() {
               animate={{ opacity: 1 }}
               transition={{ duration: 0.2 }}
               ref={scrollContainerRef}
-              className="flex-1 overflow-y-auto px-4 py-4 bg-white pb-[calc(env(safe-area-inset-bottom)+90px)] lg:pb-4 flex flex-col"
+              className="flex-1 overflow-y-auto px-4 py-4 bg-white pb-[calc(env(safe-area-inset-bottom)+100px)] lg:pb-6 flex flex-col"
               style={{ 
                 overflowAnchor: 'none',
               }}
@@ -435,8 +435,8 @@ function MessagesPageContent() {
               />
             </motion.div>
 
-            {/* Typing Indicator - Fixed position above input */}
-            <div className="absolute bottom-[calc(env(safe-area-inset-bottom)+68px)] left-0 right-0 lg:bottom-[68px] pointer-events-none z-10">
+            {/* Typing Indicator - In the space between messages and input */}
+            <div className="absolute bottom-[calc(env(safe-area-inset-bottom)+90px)] left-0 right-0 lg:bottom-[100px] pointer-events-none z-10">
               <TypingIndicator conversationId={conversationId} />
             </div>
 
