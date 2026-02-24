@@ -6,6 +6,13 @@ import { AnimatedDiv, AnimatedBadge } from "@/components/ui/motion";
 import { formatMessageTime } from "@/lib/utils/formatTimestamp";
 import { cn } from "@/lib/utils";
 import { Check, CheckCheck } from "lucide-react";
+import { useMessageContext } from "@/lib/hooks/useMessageContext";
+import { MessageContextMenu } from "@/components/features/messaging/MessageContextMenu";
+
+interface Reaction {
+  emoji: string;
+  userId: string;
+}
 
 interface MessageBubbleProps {
   content: string;
@@ -24,6 +31,9 @@ interface MessageBubbleProps {
   isDeleted?: boolean;
   onDelete?: () => void;
   isSelectMode?: boolean;
+  reactions?: Reaction[];
+  onReaction?: (emoji: string) => void;
+  currentUserId?: string;
 }
 
 export function MessageBubble({
@@ -43,18 +53,39 @@ export function MessageBubble({
   isDeleted = false,
   onDelete,
   isSelectMode = false,
+  reactions = [],
+  onReaction,
+  currentUserId,
 }: MessageBubbleProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [showNewBadge, setShowNewBadge] = useState(false);
-  const [showDeleteMenu, setShowDeleteMenu] = useState(false);
   const [isLongPressing, setIsLongPressing] = useState(false);
   const longPressTimer = useRef<NodeJS.Timeout | null>(null);
-  const deleteExecutedRef = useRef(false);
+  const bubbleRef = useRef<HTMLDivElement>(null);
+  const context = useMessageContext(isCurrentUser);
 
   // Determine if badge should be shown (only for unread messages from other users)
   const shouldShowBadge = useMemo(() => {
     return isUnread && !isCurrentUser;
   }, [isUnread, isCurrentUser]);
+
+  // Group reactions by emoji with counts
+  const groupedReactions = useMemo(() => {
+    const groups: { [emoji: string]: { count: number; userIds: string[]; hasCurrentUser: boolean } } = {};
+    
+    reactions.forEach((reaction) => {
+      if (!groups[reaction.emoji]) {
+        groups[reaction.emoji] = { count: 0, userIds: [], hasCurrentUser: false };
+      }
+      groups[reaction.emoji].count++;
+      groups[reaction.emoji].userIds.push(reaction.userId);
+      if (reaction.userId === currentUserId) {
+        groups[reaction.emoji].hasCurrentUser = true;
+      }
+    });
+    
+    return groups;
+  }, [reactions, currentUserId]);
 
   // Show NEW badge only once per message (track in localStorage)
   useEffect(() => {
@@ -78,15 +109,20 @@ export function MessageBubble({
     }
   }, [shouldShowBadge, messageId]);
 
-  // Handle long press for mobile
+  // Handle long press for mobile - show action menu
   const handleTouchStart = (e: React.TouchEvent) => {
-    if (!isCurrentUser || isDeleted || isSelectMode) return;
+    if (isDeleted || isSelectMode) return;
     
     setIsLongPressing(true);
     longPressTimer.current = setTimeout(() => {
-      deleteExecutedRef.current = false; // Reset flag when opening menu
-      setShowDeleteMenu(true);
+      if (bubbleRef.current) {
+        context.open(bubbleRef.current);
+      }
       setIsLongPressing(false);
+      // Haptic feedback on supported devices
+      if (navigator.vibrate) {
+        navigator.vibrate(50);
+      }
     }, 500);
   };
 
@@ -104,16 +140,26 @@ export function MessageBubble({
     }
   };
 
-  // Handle right-click for desktop
+  // Handle right-click for desktop - show action menu
   const handleContextMenu = (e: React.MouseEvent) => {
-    if (!isCurrentUser || isDeleted || isSelectMode) return;
+    if (isDeleted || isSelectMode) return;
     
     e.preventDefault();
-    deleteExecutedRef.current = false; // Reset flag when opening menu
-    setShowDeleteMenu(true);
+    if (bubbleRef.current) {
+      context.open(bubbleRef.current);
+    }
+  };
+
+  // Handle double-click for quick reactions
+  const handleDoubleClick = () => {
+    if (isDeleted || isSelectMode) return;
+    if (bubbleRef.current) {
+      context.open(bubbleRef.current);
+    }
   };
 
   return (
+    <>
     <AnimatedDiv
       variant="fadeInUp"
       data-message-id={messageId}
@@ -141,18 +187,25 @@ export function MessageBubble({
       {/* Message content */}
       <div
         className={cn(
-          "flex flex-col max-w-[75%] md:max-w-[65%]",
+          "flex flex-col max-w-[75%] md:max-w-[65%] relative",
           isCurrentUser ? "items-end" : "items-start"
         )}
       >
-        {/* Sender name - Hidden for 1v1, will show for group chats */}
-        {/* {showName && !isCurrentUser && (
-          <span className="text-xs font-medium text-gray-600 px-3 mb-1.5">
-            {senderName || "Unknown"}
-          </span>
-        )} */}
-        
-        <div className="relative">
+        <motion.div
+          ref={bubbleRef}
+          className="relative select-none"
+          animate={{
+            scale: context.isOpen ? 1.05 : 1,
+          }}
+          transition={{ type: "spring", stiffness: 400, damping: 28 }}
+          style={{
+            transformOrigin: isCurrentUser ? 'right center' : 'left center',
+            zIndex: context.isOpen ? 45 : 'auto',
+            WebkitUserSelect: 'none',
+            userSelect: 'none',
+            WebkitTouchCallout: 'none',
+          }}
+        >
           {/* NEW badge - shows for 2 seconds only */}
           {showNewBadge && (
             <AnimatedBadge className="absolute -top-2 -left-2 bg-blue-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm z-10">
@@ -162,7 +215,7 @@ export function MessageBubble({
           
           <div
             className={cn(
-              "px-3 py-2 rounded-2xl transition-all duration-200 inline-block",
+              "px-3 py-2 rounded-2xl transition-all duration-200 inline-block relative",
               isCurrentUser
                 ? "bg-blue-600 text-white"
                 : "bg-gray-100 text-gray-900",
@@ -180,8 +233,10 @@ export function MessageBubble({
               ),
               isHovered && "shadow-sm",
               isDeleted && "bg-gray-50 border border-gray-200",
-              isLongPressing && isCurrentUser && !isDeleted && "scale-95 opacity-80"
+              isLongPressing && !isDeleted && "scale-95 opacity-80",
+              context.isOpen && "shadow-xl"
             )}
+            onDoubleClick={handleDoubleClick}
           >
             {isDeleted ? (
               // Deleted message state
@@ -193,7 +248,7 @@ export function MessageBubble({
             ) : (
               // Normal message
               <div className="flex items-end gap-2">
-                <p className="whitespace-pre-wrap break-words leading-relaxed text-[15px]">
+                <p className="whitespace-pre-wrap wrap-break-word leading-relaxed text-[15px]">
                   {content}
                 </p>
                 <div className="flex items-center gap-1 shrink-0 self-end pb-px">
@@ -216,84 +271,56 @@ export function MessageBubble({
               </div>
             )}
           </div>
-        </div>
-      </div>
-      
-      {/* Delete confirmation menu and backdrop - outside message structure */}
-      {showDeleteMenu && (
-        <>
-          {/* Backdrop */}
-          <AnimatedDiv
-            variant="fadeIn"
-            className="fixed inset-0 z-40 bg-black/10 backdrop-blur-[2px]" 
-            onClick={() => setShowDeleteMenu(false)}
-            onTouchEnd={(e) => {
-              e.preventDefault();
-              setShowDeleteMenu(false);
-            }}
-          />
-          
-          {/* Dialog */}
+        </motion.div>
+
+        {/* Reaction Display - below message */}
+        {Object.keys(groupedReactions).length > 0 && !isDeleted && (
           <motion.div
-            initial={{ scale: 0.9, opacity: 0, y: 10 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.9, opacity: 0, y: 10 }}
-            transition={{
-              type: "spring",
-              stiffness: 400,
-              damping: 25,
-            }}
-            className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl shadow-2xl border border-gray-200 p-4 z-50 w-[280px] max-w-[90vw]"
-            onClick={(e) => e.stopPropagation()}
-            onTouchStart={(e) => e.stopPropagation()}
-            onTouchEnd={(e) => e.stopPropagation()}
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.2 }}
+            className={cn(
+              "flex flex-wrap gap-1 mt-1",
+              isCurrentUser ? "justify-end" : "justify-start"
+            )}
           >
-            <p className="text-sm text-gray-800 mb-4 font-medium">Delete this message?</p>
-            <div className="flex gap-2">
+            {Object.entries(groupedReactions).map(([emoji, data]) => (
               <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (deleteExecutedRef.current) return;
-                  deleteExecutedRef.current = true;
-                  onDelete?.();
-                  setShowDeleteMenu(false);
-                }}
-                onTouchStart={(e) => {
-                  e.stopPropagation(); // Prevent touch from bubbling to message
-                }}
-                onTouchEnd={(e) => {
-                  e.stopPropagation();
-                  e.preventDefault();
-                  if (deleteExecutedRef.current) return;
-                  deleteExecutedRef.current = true;
-                  onDelete?.();
-                  setShowDeleteMenu(false);
-                }}
-                className="flex-1 bg-red-500 text-white text-sm px-4 py-2.5 rounded-lg hover:bg-red-600 active:scale-95 transition-all font-medium shadow-sm"
+                key={emoji}
+                onClick={() => onReaction?.(emoji)}
+                className={cn(
+                  "flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs transition-all",
+                  data.hasCurrentUser
+                    ? "bg-blue-100 border border-blue-300 hover:bg-blue-200"
+                    : "bg-gray-100 border border-gray-200 hover:bg-gray-200"
+                )}
               >
-                Delete
+                <span className="text-[13px]">{emoji}</span>
+                <span className={cn(
+                  "font-medium text-[11px]",
+                  data.hasCurrentUser ? "text-blue-700" : "text-gray-700"
+                )}>
+                  {data.count}
+                </span>
               </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowDeleteMenu(false);
-                }}
-                onTouchStart={(e) => {
-                  e.stopPropagation(); // Prevent touch from bubbling to message
-                }}
-                onTouchEnd={(e) => {
-                  e.stopPropagation();
-                  e.preventDefault();
-                  setShowDeleteMenu(false);
-                }}
-                className="flex-1 bg-gray-100 text-gray-700 text-sm px-4 py-2.5 rounded-lg hover:bg-gray-200 active:scale-95 transition-all font-medium"
-              >
-                Cancel
-              </button>
-            </div>
+            ))}
           </motion.div>
-        </>
-      )}
+        )}
+      </div>
     </AnimatedDiv>
+
+    {/* Anchored context menu (reactions + actions) rendered via portal */}
+    <MessageContextMenu
+      isOpen={context.isOpen}
+      position={context.menuPosition}
+      isCurrentUser={isCurrentUser}
+      content={content}
+      isGroupedWithPrev={isGroupedWithPrev}
+      isGroupedWithNext={isGroupedWithNext}
+      onClose={context.close}
+      onReaction={onReaction}
+      onDelete={onDelete}
+    />
+    </>
   );
 }

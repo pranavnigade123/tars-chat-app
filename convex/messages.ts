@@ -303,3 +303,57 @@ export const deleteMessage = mutation({
     return { success: true };
   },
 });
+
+/**
+ * Toggle a reaction on a message
+ * If user already reacted with this emoji, remove it. Otherwise, add it.
+ */
+export const toggleReaction = mutation({
+  args: {
+    messageId: v.id("messages"),
+    emoji: v.string(),
+  },
+  handler: async (ctx, args) => {
+    // Get authenticated user
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    // Validate emoji is one of the allowed reactions
+    const allowedEmojis = ["👍", "❤️", "😂", "😮", "😢"];
+    if (!allowedEmojis.includes(args.emoji)) {
+      throw new Error("Invalid emoji reaction");
+    }
+
+    // Get the message
+    const message = await ctx.db.get(args.messageId);
+    if (!message) {
+      throw new Error("Message not found");
+    }
+
+    // Get current reactions (handle migration)
+    const reactions = message.reactions || [];
+
+    // Check if user already reacted with this emoji
+    const existingReactionIndex = reactions.findIndex(
+      (r) => r.emoji === args.emoji && r.userId === identity.subject
+    );
+
+    let newReactions;
+    if (existingReactionIndex >= 0) {
+      // Remove the reaction
+      newReactions = reactions.filter((_, index) => index !== existingReactionIndex);
+    } else {
+      // Add the reaction
+      newReactions = [...reactions, { emoji: args.emoji, userId: identity.subject }];
+    }
+
+    // Update the message
+    await ctx.db.patch(args.messageId, {
+      reactions: newReactions,
+    });
+
+    return { success: true, added: existingReactionIndex < 0 };
+  },
+});
