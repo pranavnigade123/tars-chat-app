@@ -306,7 +306,8 @@ export const deleteMessage = mutation({
 
 /**
  * Toggle a reaction on a message
- * If user already reacted with this emoji, remove it. Otherwise, add it.
+ * User can only have ONE reaction per message. If they react with a different emoji,
+ * it replaces their previous reaction. Clicking the same emoji removes it.
  */
 export const toggleReaction = mutation({
   args: {
@@ -335,17 +336,28 @@ export const toggleReaction = mutation({
     // Get current reactions (handle migration)
     const reactions = message.reactions || [];
 
-    // Check if user already reacted with this emoji
+    // Find any existing reaction from this user
     const existingReactionIndex = reactions.findIndex(
-      (r) => r.emoji === args.emoji && r.userId === identity.subject
+      (r) => r.userId === identity.subject
     );
 
     let newReactions;
     if (existingReactionIndex >= 0) {
-      // Remove the reaction
-      newReactions = reactions.filter((_, index) => index !== existingReactionIndex);
+      const existingEmoji = reactions[existingReactionIndex].emoji;
+      
+      if (existingEmoji === args.emoji) {
+        // Same emoji - remove it (toggle off)
+        newReactions = reactions.filter((_, index) => index !== existingReactionIndex);
+      } else {
+        // Different emoji - replace the old one
+        newReactions = reactions.map((r, index) =>
+          index === existingReactionIndex
+            ? { emoji: args.emoji, userId: identity.subject }
+            : r
+        );
+      }
     } else {
-      // Add the reaction
+      // No existing reaction - add new one
       newReactions = [...reactions, { emoji: args.emoji, userId: identity.subject }];
     }
 
@@ -354,6 +366,6 @@ export const toggleReaction = mutation({
       reactions: newReactions,
     });
 
-    return { success: true, added: existingReactionIndex < 0 };
+    return { success: true, added: existingReactionIndex < 0 || reactions[existingReactionIndex].emoji !== args.emoji };
   },
 });
