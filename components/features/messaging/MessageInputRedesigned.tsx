@@ -4,6 +4,7 @@ import { useState, useRef, KeyboardEvent, useCallback, useEffect } from "react";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Send } from "lucide-react";
+import { AnimatedButton } from "@/components/ui/motion";
 import type { Id } from "@/convex/_generated/dataModel";
 import { useDebounce } from "@/lib/hooks/useDebouncedCallback";
 import { cn } from "@/lib/utils";
@@ -118,14 +119,21 @@ export function MessageInputRedesigned({ conversationId, onMessageSent }: Messag
     
     if (!trimmedContent) return;
 
+    // Clear typing state immediately before sending
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+    clearTypingState({ conversationId }).catch(() => {});
+
+    // Clear input immediately for better UX (fast messaging)
+    const messageToSend = trimmedContent;
+    setContent("");
     setIsSending(true);
     setError(null);
 
     try {
-      await clearTypingState({ conversationId });
-      await sendMessage({ conversationId, content: trimmedContent });
+      await sendMessage({ conversationId, content: messageToSend });
 
-      setContent("");
       setFailedMessage(null);
       
       const draftKey = `draft_${conversationId}`;
@@ -133,14 +141,19 @@ export function MessageInputRedesigned({ conversationId, onMessageSent }: Messag
       localStorage.removeItem(draftKey);
       localStorage.removeItem(draftTimestampKey);
       
-      textareaRef.current?.focus();
       onMessageSent?.();
     } catch (err) {
       console.error("Failed to send message:", err);
       setError("Failed to send message.");
-      setFailedMessage(trimmedContent);
+      setFailedMessage(messageToSend);
+      // Restore content on failure
+      setContent(messageToSend);
     } finally {
       setIsSending(false);
+      // Keep focus on textarea after sending
+      setTimeout(() => {
+        textareaRef.current?.focus();
+      }, 0);
     }
   };
 
@@ -168,8 +181,13 @@ export function MessageInputRedesigned({ conversationId, onMessageSent }: Messag
     clearTypingState({ conversationId }).catch(() => {});
   };
 
+  // Click handler for wrapper to focus textarea
+  const handleWrapperClick = () => {
+    textareaRef.current?.focus();
+  };
+
   return (
-    <div className="p-3 lg:p-4 bg-white border-t border-gray-100">
+    <div className="p-3 lg:p-4 bg-gray-50 border-t border-gray-200">
       {error && (
         <div className="mb-2 lg:mb-3 rounded-xl bg-red-50 border border-red-100 p-2.5 lg:p-3 text-sm text-red-700 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -188,9 +206,10 @@ export function MessageInputRedesigned({ conversationId, onMessageSent }: Messag
       )}
       
       <div 
+        onClick={handleWrapperClick}
         className={cn(
-          "flex items-end gap-2 rounded-2xl bg-gray-50 px-3 py-2 lg:px-4 lg:py-3 transition-all duration-200",
-          isFocused && "bg-white ring-2 ring-blue-500 shadow-sm"
+          "flex items-center gap-3 rounded-3xl bg-white border border-gray-200 px-4 py-2.5 lg:px-5 lg:py-3 transition-all duration-200 cursor-text shadow-sm",
+          isFocused && "ring-2 ring-blue-500 border-blue-500 shadow-md"
         )}
       >
         <textarea
@@ -206,22 +225,23 @@ export function MessageInputRedesigned({ conversationId, onMessageSent }: Messag
           placeholder="Message..."
           disabled={isSending}
           rows={1}
-          className="flex-1 resize-none bg-transparent text-gray-900 placeholder:text-gray-400 focus:outline-none disabled:cursor-not-allowed max-h-[120px] text-base lg:text-[15px]"
+          className="flex-1 resize-none bg-transparent text-gray-900 placeholder:text-gray-400 focus:outline-none disabled:cursor-not-allowed max-h-[120px] text-base lg:text-[15px] leading-relaxed"
         />
         
-        <button
+        <AnimatedButton
           onClick={handleSend}
           disabled={isSending || !content.trim()}
+          scaleOnHover={!!(content.trim() && !isSending)}
           className={cn(
-            "flex h-8 w-8 lg:h-9 lg:w-9 items-center justify-center rounded-full transition-all duration-200 shrink-0",
+            "flex h-9 w-9 lg:h-10 lg:w-10 items-center justify-center rounded-full transition-colors duration-200 shrink-0",
             content.trim() && !isSending
-              ? "bg-blue-600 text-white hover:bg-blue-700 active:scale-95"
+              ? "bg-blue-600 text-white hover:bg-blue-700 shadow-sm"
               : "bg-gray-200 text-gray-400 cursor-not-allowed"
           )}
           aria-label="Send message"
         >
-          <Send className="h-4 w-4" />
-        </button>
+          <Send className="h-4 w-4 lg:h-[18px] lg:w-[18px]" />
+        </AnimatedButton>
       </div>
     </div>
   );

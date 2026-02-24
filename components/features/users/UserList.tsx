@@ -19,7 +19,6 @@ export function UserList({ currentUserId }: UserListProps) {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
-  const [isCreatingConversation, setIsCreatingConversation] = useState(false);
 
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const users = useQuery(api.users.getAllUsersExceptCurrentWithStatus, { currentUserId });
@@ -33,19 +32,20 @@ export function UserList({ currentUserId }: UserListProps) {
 
   const handleUserSelect = async (userId: string) => {
     setSelectedUserId(userId);
-    setIsCreatingConversation(true);
 
     try {
-      const conversationId = await getOrCreateConversation({
+      // Start navigation immediately for perceived speed
+      const conversationPromise = getOrCreateConversation({
         participantIds: [currentUserId, userId],
       });
       
+      // Navigate as soon as we have the ID
+      const conversationId = await conversationPromise;
       router.push(`/messages?conversationId=${conversationId}`);
     } catch (error) {
       console.error("Failed to create conversation:", error);
       alert("Failed to start conversation. Please try again.");
-    } finally {
-      setIsCreatingConversation(false);
+      setSelectedUserId(null);
     }
   };
 
@@ -125,23 +125,16 @@ export function UserList({ currentUserId }: UserListProps) {
       </div>
 
       <div className="flex-1 overflow-y-auto px-2 pb-4">
-        {filteredAndSortedUsers.map((user) => (
+        {filteredAndSortedUsers.map((user, index) => (
           <UserListItem
             key={user._id}
             user={user}
             onClick={() => handleUserSelect(user.clerkId)}
             isSelected={selectedUserId === user.clerkId}
+            index={index}
           />
         ))}
       </div>
-
-      {isCreatingConversation && (
-        <div className="absolute inset-0 flex items-center justify-center bg-white/50 backdrop-blur-sm">
-          <div className="rounded-2xl bg-white px-6 py-4 shadow-lg">
-            <p className="text-sm text-gray-600">Starting conversation...</p>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
