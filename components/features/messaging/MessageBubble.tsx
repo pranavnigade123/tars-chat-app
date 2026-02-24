@@ -296,12 +296,14 @@ export function MessageBubble({
                 )}
               >
                 <span className="text-[13px]">{emoji}</span>
-                <span className={cn(
-                  "font-medium text-[11px]",
-                  data.hasCurrentUser ? "text-blue-700" : "text-gray-700"
-                )}>
-                  {data.count}
-                </span>
+                {data.count > 1 && (
+                  <span className={cn(
+                    "font-medium text-[11px]",
+                    data.hasCurrentUser ? "text-blue-700" : "text-gray-700"
+                  )}>
+                    {data.count}
+                  </span>
+                )}
               </button>
             ))}
           </motion.div>
