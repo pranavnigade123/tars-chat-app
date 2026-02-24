@@ -20,10 +20,11 @@ export interface ContextMenuPosition {
   actionLeft: number | null;
 }
 
-const REACTION_BAR_HEIGHT = 56;
-const REACTION_BAR_WIDTH = 268;
-const VIEWPORT_MARGIN = 12;
-const GAP = 8;
+const REACTION_BAR_HEIGHT = 44;
+const REACTION_BAR_WIDTH = 200;
+const VIEWPORT_MARGIN = 16;
+const REACTION_GAP = 26; // Increased gap for reaction bar above message
+const ACTION_GAP = 12; // Smaller gap for action menu below message
 
 export function useMessageContext(isCurrentUser: boolean) {
   const [isOpen, setIsOpen] = useState(false);
@@ -37,9 +38,9 @@ export function useMessageContext(isCurrentUser: boolean) {
       const vh = window.innerHeight;
 
       // Reaction bar: default above the message; flip below if not enough room
-      let reactionTop = rect.top - REACTION_BAR_HEIGHT - GAP;
+      let reactionTop = rect.top - REACTION_BAR_HEIGHT - REACTION_GAP;
       if (reactionTop < VIEWPORT_MARGIN) {
-        reactionTop = rect.bottom + GAP;
+        reactionTop = rect.bottom + REACTION_GAP;
       }
 
       // Horizontal alignment of reaction bar
@@ -51,8 +52,8 @@ export function useMessageContext(isCurrentUser: boolean) {
         Math.min(reactionLeft, vw - REACTION_BAR_WIDTH - VIEWPORT_MARGIN)
       );
 
-      // Action menu: below message, clamped so it doesn't go off-screen
-      const actionTop = Math.min(rect.bottom + GAP, vh - 120 - VIEWPORT_MARGIN);
+      // Action menu: below message with smaller gap
+      const actionTop = Math.min(rect.bottom + ACTION_GAP, vh - 120 - VIEWPORT_MARGIN);
 
       // Align action menu edge with message edge
       const actionRight = isCurrentUser ? vw - rect.right : null;

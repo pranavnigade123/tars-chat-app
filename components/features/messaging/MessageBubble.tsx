@@ -191,7 +191,18 @@ export function MessageBubble({
           isCurrentUser ? "items-end" : "items-start"
         )}
       >
-        <div className="relative">
+        <motion.div
+          ref={bubbleRef}
+          className="relative"
+          animate={{
+            scale: context.isOpen ? 1.05 : 1,
+          }}
+          transition={{ type: "spring", stiffness: 400, damping: 28 }}
+          style={{
+            transformOrigin: isCurrentUser ? 'right center' : 'left center',
+            zIndex: context.isOpen ? 45 : 'auto',
+          }}
+        >
           {/* NEW badge - shows for 2 seconds only */}
           {showNewBadge && (
             <AnimatedBadge className="absolute -top-2 -left-2 bg-blue-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm z-10">
@@ -200,7 +211,6 @@ export function MessageBubble({
           )}
           
           <div
-            ref={bubbleRef}
             className={cn(
               "px-3 py-2 rounded-2xl transition-all duration-200 inline-block relative",
               isCurrentUser
@@ -220,7 +230,8 @@ export function MessageBubble({
               ),
               isHovered && "shadow-sm",
               isDeleted && "bg-gray-50 border border-gray-200",
-              isLongPressing && !isDeleted && "scale-95 opacity-80"
+              isLongPressing && !isDeleted && "scale-95 opacity-80",
+              context.isOpen && "shadow-xl"
             )}
             onDoubleClick={handleDoubleClick}
           >
@@ -257,7 +268,7 @@ export function MessageBubble({
               </div>
             )}
           </div>
-        </div>
+        </motion.div>
 
         {/* Reaction Display - below message */}
         {Object.keys(groupedReactions).length > 0 && !isDeleted && (
