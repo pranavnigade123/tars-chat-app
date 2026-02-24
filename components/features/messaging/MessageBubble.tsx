@@ -89,9 +89,6 @@ export function MessageBubble({
   const handleTouchStart = (e: React.TouchEvent) => {
     if (!isCurrentUser || isDeleted || isSelectMode) return;
     
-    // Prevent text selection on long press
-    e.preventDefault();
-    
     setIsLongPressing(true);
     longPressTimer.current = setTimeout(() => {
       setShowDeleteMenu(true);
