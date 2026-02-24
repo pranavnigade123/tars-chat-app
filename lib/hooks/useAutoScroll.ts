@@ -94,11 +94,15 @@ export function useAutoScroll(
     previousMessageCountRef.current = 0;
     
     // Scroll to bottom on conversation change - instant
-    if (messageCount > 0) {
+    if (messageCount > 0 && scrollContainerRef.current) {
       // Use requestAnimationFrame for immediate scroll after render
-      requestAnimationFrame(() => scrollToBottom(false));
+      requestAnimationFrame(() => {
+        if (scrollContainerRef.current) {
+          scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+        }
+      });
     }
-  }, [conversationId, messageCount, scrollToBottom]);
+  }, [conversationId, messageCount]);
 
   // Auto-scroll on new messages
   useEffect(() => {
