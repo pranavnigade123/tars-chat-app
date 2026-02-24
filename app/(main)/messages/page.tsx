@@ -33,6 +33,7 @@ function MessagesPageContent() {
   const markMessagesAsRead = useMutation(api.messages.markMessagesAsRead);
   const markMessageAsRead = useMutation(api.messages.markMessageAsRead);
   const deleteMessage = useMutation(api.messages.deleteMessage);
+  const toggleReaction = useMutation(api.messages.toggleReaction);
   const scrollToBottomRef = useRef<(() => void) | null>(null);
   const [isSelectMode, setIsSelectMode] = useState(false);
   const [selectedMessages, setSelectedMessages] = useState<Set<Id<"messages">>>(new Set());
@@ -338,6 +339,14 @@ function MessagesPageContent() {
                       }
                     };
 
+                    const handleReaction = async (emoji: string) => {
+                      try {
+                        await toggleReaction({ messageId: message._id, emoji });
+                      } catch (error) {
+                        console.error("Failed to toggle reaction:", error);
+                      }
+                    };
+
                     return (
                       <div key={message._id}>
                         {/* Date Separator */}
@@ -406,6 +415,9 @@ function MessagesPageContent() {
                             isDeleted={message.isDeleted}
                             onDelete={handleDelete}
                             isSelectMode={isSelectMode}
+                            reactions={message.reactions || []}
+                            onReaction={handleReaction}
+                            currentUserId={user.id}
                           />
                         </div>
                       </div>

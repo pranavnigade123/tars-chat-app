@@ -3,11 +3,15 @@
 import { useState, useRef, KeyboardEvent, useCallback, useEffect } from "react";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { Send } from "lucide-react";
+import { Send, Smile } from "lucide-react";
 import { AnimatedButton } from "@/components/ui/motion";
 import type { Id } from "@/convex/_generated/dataModel";
 import { useDebounce } from "@/lib/hooks/useDebouncedCallback";
 import { cn } from "@/lib/utils";
+import dynamic from "next/dynamic";
+
+// Dynamically import emoji picker to reduce bundle size
+const EmojiPicker = dynamic(() => import("emoji-picker-react"), { ssr: false });
 
 interface MessageInputProps {
   conversationId: Id<"conversations">;
@@ -20,8 +24,10 @@ export function MessageInputRedesigned({ conversationId, onMessageSent }: Messag
   const [error, setError] = useState<string | null>(null);
   const [failedMessage, setFailedMessage] = useState<string | null>(null);
   const [isFocused, setIsFocused] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const emojiPickerRef = useRef<HTMLDivElement>(null);
   
   const sendMessage = useMutation(api.messages.sendMessage);
   const setTypingState = useMutation(api.typingStates.setTypingState);
@@ -65,6 +71,20 @@ export function MessageInputRedesigned({ conversationId, onMessageSent }: Messag
       clearTypingState({ conversationId }).catch(() => {});
     };
   }, [conversationId, clearTypingState]);
+
+  // Close emoji picker when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target as Node)) {
+        setShowEmojiPicker(false);
+      }
+    };
+
+    if (showEmojiPicker) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [showEmojiPicker]);
 
   // Load draft message from localStorage
   useEffect(() => {
@@ -186,6 +206,12 @@ export function MessageInputRedesigned({ conversationId, onMessageSent }: Messag
     textareaRef.current?.focus();
   };
 
+  const handleEmojiClick = (emojiData: any) => {
+    setContent((prev) => prev + emojiData.emoji);
+    setShowEmojiPicker(false);
+    textareaRef.current?.focus();
+  };
+
   return (
     <div className="p-3 lg:p-4 bg-gray-50 border-t border-gray-200">
       {error && (
@@ -208,10 +234,41 @@ export function MessageInputRedesigned({ conversationId, onMessageSent }: Messag
       <div 
         onClick={handleWrapperClick}
         className={cn(
-          "flex items-center gap-3 rounded-3xl bg-white border border-gray-200 px-4 py-2.5 lg:px-5 lg:py-3 transition-all duration-200 cursor-text shadow-sm",
+          "flex items-center gap-3 rounded-3xl bg-white border border-gray-200 px-4 py-2.5 lg:px-5 lg:py-3 transition-all duration-200 cursor-text shadow-sm relative",
           isFocused && "ring-2 ring-blue-500 border-blue-500 shadow-md"
         )}
       >
+        {/* Emoji Picker Popup */}
+        {showEmojiPicker && (
+          <div 
+            ref={emojiPickerRef}
+            className="absolute bottom-full left-0 mb-2 z-50"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <EmojiPicker
+              onEmojiClick={handleEmojiClick}
+              width={320}
+              height={400}
+              previewConfig={{ showPreview: false }}
+              searchPlaceHolder="Search emoji..."
+              skinTonesDisabled
+            />
+          </div>
+        )}
+
+        {/* Emoji Button */}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowEmojiPicker(!showEmojiPicker);
+          }}
+          className="text-gray-400 hover:text-gray-600 transition-colors shrink-0"
+          aria-label="Add emoji"
+        >
+          <Smile className="h-5 w-5 lg:h-6 lg:w-6" />
+        </button>
+
         <textarea
           ref={textareaRef}
           value={content}
