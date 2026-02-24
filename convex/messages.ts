@@ -26,13 +26,12 @@ export const getMessages = query({
       throw new Error("Not authorized to view this conversation");
     }
 
-    // Get all non-deleted messages for this conversation
+    // Get all messages for this conversation (including deleted ones)
     const messages = await ctx.db
       .query("messages")
       .withIndex("by_conversation_and_time", (q) =>
         q.eq("conversationId", args.conversationId)
       )
-      .filter((q) => q.eq(q.field("isDeleted"), false))
       .collect();
 
     // Enrich messages with sender information
@@ -268,5 +267,105 @@ export const getUnreadCount = query({
     }
 
     return unreadCount;
+  },
+});
+
+/**
+ * Soft delete a message (only the sender can delete their own messages)
+ */
+export const deleteMessage = mutation({
+  args: {
+    messageId: v.id("messages"),
+  },
+  handler: async (ctx, args) => {
+    // Get authenticated user
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    // Get the message
+    const message = await ctx.db.get(args.messageId);
+    if (!message) {
+      throw new Error("Message not found");
+    }
+
+    // Verify the user is the sender
+    if (message.senderId !== identity.subject) {
+      throw new Error("Not authorized to delete this message");
+    }
+
+    // Soft delete the message
+    await ctx.db.patch(args.messageId, {
+      isDeleted: true,
+    });
+
+    return { success: true };
+  },
+});
+
+/**
+ * Toggle a reaction on a message
+ * User can only have ONE reaction per message. If they react with a different emoji,
+ * it replaces their previous reaction. Clicking the same emoji removes it.
+ */
+export const toggleReaction = mutation({
+  args: {
+    messageId: v.id("messages"),
+    emoji: v.string(),
+  },
+  handler: async (ctx, args) => {
+    // Get authenticated user
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    // Validate emoji is one of the allowed reactions
+    const allowedEmojis = ["👍", "❤️", "😂", "😮", "😢"];
+    if (!allowedEmojis.includes(args.emoji)) {
+      throw new Error("Invalid emoji reaction");
+    }
+
+    // Get the message
+    const message = await ctx.db.get(args.messageId);
+    if (!message) {
+      throw new Error("Message not found");
+    }
+
+    // Get current reactions (handle migration)
+    const reactions = message.reactions || [];
+
+    // Find any existing reaction from this user
+    const existingReactionIndex = reactions.findIndex(
+      (r) => r.userId === identity.subject
+    );
+
+    let newReactions;
+    if (existingReactionIndex >= 0) {
+      const existingEmoji = reactions[existingReactionIndex].emoji;
+      
+      if (existingEmoji === args.emoji) {
+        // Same emoji - remove it (toggle off)
+        newReactions = reactions.filter((_, index) => index !== existingReactionIndex);
+      } else {
+        // Different emoji - replace the old one
+        newReactions = reactions.map((r, index) =>
+          index === existingReactionIndex
+            ? { emoji: args.emoji, userId: identity.subject }
+            : r
+        );
+      }
+    } else {
+      // No existing reaction - add new one
+      newReactions = [...reactions, { emoji: args.emoji, userId: identity.subject }];
+    }
+
+    // Update the message
+    await ctx.db.patch(args.messageId, {
+      reactions: newReactions,
+    });
+
+    return { success: true, added: existingReactionIndex < 0 || reactions[existingReactionIndex].emoji !== args.emoji };
   },
 });

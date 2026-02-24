@@ -19,7 +19,6 @@ export function UserList({ currentUserId }: UserListProps) {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
-  const [isCreatingConversation, setIsCreatingConversation] = useState(false);
 
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const users = useQuery(api.users.getAllUsersExceptCurrentWithStatus, { currentUserId });
@@ -33,32 +32,33 @@ export function UserList({ currentUserId }: UserListProps) {
 
   const handleUserSelect = async (userId: string) => {
     setSelectedUserId(userId);
-    setIsCreatingConversation(true);
 
     try {
-      const conversationId = await getOrCreateConversation({
+      // Start navigation immediately for perceived speed
+      const conversationPromise = getOrCreateConversation({
         participantIds: [currentUserId, userId],
       });
       
+      // Navigate as soon as we have the ID
+      const conversationId = await conversationPromise;
       router.push(`/messages?conversationId=${conversationId}`);
     } catch (error) {
       console.error("Failed to create conversation:", error);
       alert("Failed to start conversation. Please try again.");
-    } finally {
-      setIsCreatingConversation(false);
+      setSelectedUserId(null);
     }
   };
 
   if (users === undefined) {
     return (
       <div className="flex h-full flex-col">
-        <div className="border-b bg-white p-4">
-          <Skeleton className="h-10 w-full" />
+        <div className="p-4">
+          <Skeleton className="h-10 w-full rounded-xl" />
         </div>
-        <div className="flex-1 overflow-y-auto p-4">
+        <div className="flex-1 overflow-y-auto px-4 space-y-2">
           {[...Array(5)].map((_, i) => (
-            <div key={i} className="mb-3 flex items-center gap-3">
-              <Skeleton className="h-12 w-12 rounded-full" />
+            <div key={i} className="flex items-center gap-4 p-4">
+              <Skeleton className="h-14 w-14 rounded-full" />
               <div className="flex-1">
                 <Skeleton className="mb-2 h-4 w-32" />
                 <Skeleton className="h-3 w-24" />
@@ -97,11 +97,11 @@ export function UserList({ currentUserId }: UserListProps) {
   if (filteredAndSortedUsers.length === 0 && searchQuery) {
     return (
       <div className="flex h-full flex-col">
-        <div className="border-b bg-white p-4">
+        <div className="p-4">
           <SearchBar
             value={searchQuery}
             onChange={setSearchQuery}
-            placeholder="Search users..."
+            placeholder="Search people..."
           />
         </div>
         <div className="flex flex-1 items-center justify-center p-4">
@@ -116,32 +116,25 @@ export function UserList({ currentUserId }: UserListProps) {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="border-b bg-white p-4">
+      <div className="p-4">
         <SearchBar
           value={searchQuery}
           onChange={setSearchQuery}
-          placeholder="Search users..."
+          placeholder="Search people..."
         />
       </div>
 
-      <div className="flex-1 overflow-y-auto p-2">
-        {filteredAndSortedUsers.map((user) => (
+      <div className="flex-1 overflow-y-auto px-2 pb-4">
+        {filteredAndSortedUsers.map((user, index) => (
           <UserListItem
             key={user._id}
             user={user}
             onClick={() => handleUserSelect(user.clerkId)}
             isSelected={selectedUserId === user.clerkId}
+            index={index}
           />
         ))}
       </div>
-
-      {isCreatingConversation && (
-        <div className="absolute inset-0 flex items-center justify-center bg-white/50">
-          <div className="rounded-lg bg-white p-4 shadow-lg">
-            <p className="text-sm text-gray-600">Starting conversation...</p>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

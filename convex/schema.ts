@@ -31,6 +31,10 @@ export default defineSchema({
     sentAt: v.number(),
     isDeleted: v.boolean(),
     readBy: v.optional(v.array(v.string())), // Array of clerk IDs who have read this message
+    reactions: v.optional(v.array(v.object({
+      emoji: v.string(), // The emoji (👍, ❤️, 😂, 😮, 😢)
+      userId: v.string(), // Clerk ID of user who reacted
+    }))),
   })
     .index("by_conversation_and_time", ["conversationId", "sentAt"])
     .index("by_sender", ["senderId"]),

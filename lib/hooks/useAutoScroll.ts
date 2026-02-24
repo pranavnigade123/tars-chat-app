@@ -9,7 +9,7 @@ interface UseAutoScrollOptions {
 }
 
 interface UseAutoScrollReturn {
-  scrollContainerRef: React.RefObject<HTMLDivElement>;
+  scrollContainerRef: React.RefObject<HTMLDivElement | null>;
   isAtBottom: boolean;
   showNewMessagesButton: boolean;
   scrollToBottom: (smooth?: boolean) => void;
@@ -80,24 +80,22 @@ export function useAutoScroll(
     }
   }, [checkIsAtBottom, enabled]);
 
-  // Initial scroll on mount
-  useEffect(() => {
-    if (messageCount > 0) {
-      scrollToBottom(false);
-    }
-  }, []); // Only on mount
-
-  // Reset scroll state when conversation changes
+  // Reset scroll state and position when conversation changes
   useEffect(() => {
     setIsAtBottom(true);
     setShowNewMessagesButton(false);
-    previousMessageCountRef.current = 0;
+    previousMessageCountRef.current = messageCount;
     
-    // Scroll to bottom on conversation change
-    if (messageCount > 0) {
-      setTimeout(() => scrollToBottom(false), 100);
+    // Immediately scroll to bottom without animation when conversation changes
+    if (scrollContainerRef.current) {
+      // Use requestAnimationFrame to ensure DOM is ready
+      requestAnimationFrame(() => {
+        if (scrollContainerRef.current) {
+          scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+        }
+      });
     }
-  }, [conversationId, messageCount, scrollToBottom]);
+  }, [conversationId, messageCount]);
 
   // Auto-scroll on new messages
   useEffect(() => {

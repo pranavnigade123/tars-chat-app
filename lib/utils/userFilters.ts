@@ -4,7 +4,7 @@ interface User {
   name: string;
   email: string;
   profileImage?: string;
-  onlineStatus: boolean;
+  isOnline?: boolean;
   lastSeen: number;
 }
 
@@ -29,8 +29,10 @@ export function filterUsers(users: User[], query: string): User[] {
 export function sortUsers(users: User[]): User[] {
   return [...users].sort((a, b) => {
     // Online users first
-    if (a.onlineStatus !== b.onlineStatus) {
-      return a.onlineStatus ? -1 : 1;
+    const aOnline = a.isOnline ?? false;
+    const bOnline = b.isOnline ?? false;
+    if (aOnline !== bOnline) {
+      return aOnline ? -1 : 1;
     }
     
     // Then alphabetically by name

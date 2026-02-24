@@ -208,9 +208,9 @@ export function MessageFeed({ conversationId, currentUserId, scrollToBottomRef }
                         {formatMessageTime(message.sentAt)}
                       </span>
                       {isRead ? (
-                        <CheckCheck className="h-3.5 w-3.5 opacity-90" title="Read" />
+                        <CheckCheck className="h-3.5 w-3.5 opacity-90" aria-label="Read" />
                       ) : isDelivered ? (
-                        <Check className="h-3.5 w-3.5 opacity-70" title="Delivered" />
+                        <Check className="h-3.5 w-3.5 opacity-70" aria-label="Delivered" />
                       ) : null}
                     </div>
                   )}

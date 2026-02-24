@@ -203,7 +203,44 @@ export function formatTimestamp(
 
 // Keep backward compatibility with existing code
 export function formatMessageTime(timestamp: number): string {
-  return formatTimestamp(timestamp, "message");
+  const date = parseTimestamp(timestamp);
+  if (!date) return "";
+  return formatTime(date); // Only return time, no date
+}
+
+/**
+ * Get date label for message grouping (e.g., "Today", "Yesterday", "Feb 24, 2026")
+ */
+export function getDateLabel(timestamp: number): string {
+  const date = parseTimestamp(timestamp);
+  if (!date) return "";
+
+  if (isToday(date)) {
+    return "Today";
+  }
+  if (isYesterday(date)) {
+    return "Yesterday";
+  }
+  if (isThisYear(date)) {
+    return formatDate(date);
+  }
+  return formatFullDate(date);
+}
+
+/**
+ * Check if two timestamps are on different days
+ */
+export function isDifferentDay(timestamp1: number, timestamp2: number): boolean {
+  const date1 = parseTimestamp(timestamp1);
+  const date2 = parseTimestamp(timestamp2);
+  
+  if (!date1 || !date2) return false;
+  
+  return (
+    date1.getFullYear() !== date2.getFullYear() ||
+    date1.getMonth() !== date2.getMonth() ||
+    date1.getDate() !== date2.getDate()
+  );
 }
 
 // Export for use in conversation list (already using this name)
