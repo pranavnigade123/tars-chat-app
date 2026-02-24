@@ -38,6 +38,7 @@ function MessagesPageContent() {
   const [selectedMessages, setSelectedMessages] = useState<Set<Id<"messages">>>(new Set());
   const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
   const [listKey, setListKey] = useState(0);
+  const [showSkeleton, setShowSkeleton] = useState(false);
 
   // Fetch data
   const conversations = useQuery(api.conversations.getUserConversations);
@@ -89,6 +90,16 @@ function MessagesPageContent() {
       setListKey(prev => prev + 1);
     }
   }, [conversationId]);
+
+  // Delay skeleton display - only show after 400ms
+  useEffect(() => {
+    if (messages === undefined) {
+      const timer = setTimeout(() => setShowSkeleton(true), 400);
+      return () => clearTimeout(timer);
+    } else {
+      setShowSkeleton(false);
+    }
+  }, [messages]);
 
   // Bulk mark messages as read when conversation opens or new messages arrive
   useEffect(() => {
@@ -213,7 +224,7 @@ function MessagesPageContent() {
           </div>
           
           {/* Mobile: Animated screens */}
-          <AnimatePresence mode="wait" initial={false}>
+          <AnimatePresence mode="wait" initial={true}>
             {!conversationId ? (
               <motion.div
                 key="conversation-list"
@@ -280,7 +291,7 @@ function MessagesPageContent() {
               ref={scrollContainerRef}
               className="flex-1 overflow-y-auto px-4 py-4 bg-white pb-[calc(env(safe-area-inset-bottom)+90px)] lg:pb-4"
             >
-              {messages === undefined ? (
+              {messages === undefined && showSkeleton ? (
                 <div className="space-y-4">
                   {[...Array(5)].map((_, i) => (
                     <div key={i} className={cn("flex gap-3", i % 2 === 0 ? "" : "flex-row-reverse")}>
@@ -289,6 +300,9 @@ function MessagesPageContent() {
                     </div>
                   ))}
                 </div>
+              ) : messages === undefined ? (
+                // Show nothing for first 400ms
+                null
               ) : messages.length === 0 ? (
                 <NoMessagesEmpty
                   otherParticipantName={conversation?.otherUser?.name || "this user"}
@@ -296,7 +310,6 @@ function MessagesPageContent() {
               ) : (
                 <div className="space-y-3">
                   {messages.map((message, index) => {
-                    const messageDelay = Math.min(index * 0.03, 0.3);
                     const isCurrentUser = message.senderId === user.id;
                     const prevMessage = index > 0 ? messages[index - 1] : null;
                     const nextMessage = index < messages.length - 1 ? messages[index + 1] : null;
@@ -324,16 +337,7 @@ function MessagesPageContent() {
                     };
 
                     return (
-                      <motion.div
-                        key={message._id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{
-                          duration: 0.25,
-                          delay: messageDelay,
-                          ease: "easeOut",
-                        }}
-                      >
+                      <div key={message._id}>
                         {/* Date Separator */}
                         {showDateSeparator && (
                           <motion.div
@@ -402,7 +406,7 @@ function MessagesPageContent() {
                             isSelectMode={isSelectMode}
                           />
                         </div>
-                      </motion.div>
+                      </div>
                     );
                   })}
                 </div>
