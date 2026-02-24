@@ -6,6 +6,8 @@ import { AnimatedDiv, AnimatedBadge } from "@/components/ui/motion";
 import { formatMessageTime } from "@/lib/utils/formatTimestamp";
 import { cn } from "@/lib/utils";
 import { Check, CheckCheck } from "lucide-react";
+import { useMessageContext } from "@/lib/hooks/useMessageContext";
+import { MessageContextMenu } from "@/components/features/messaging/MessageContextMenu";
 
 interface Reaction {
   emoji: string;
@@ -57,12 +59,10 @@ export function MessageBubble({
 }: MessageBubbleProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [showNewBadge, setShowNewBadge] = useState(false);
-  const [showActionMenu, setShowActionMenu] = useState(false);
   const [isLongPressing, setIsLongPressing] = useState(false);
   const longPressTimer = useRef<NodeJS.Timeout | null>(null);
-  const actionExecutedRef = useRef(false);
-
-  const REACTION_EMOJIS = ["👍", "❤️", "😂", "😮", "😢"];
+  const bubbleRef = useRef<HTMLDivElement>(null);
+  const context = useMessageContext(isCurrentUser);
 
   // Determine if badge should be shown (only for unread messages from other users)
   const shouldShowBadge = useMemo(() => {
@@ -115,8 +115,9 @@ export function MessageBubble({
     
     setIsLongPressing(true);
     longPressTimer.current = setTimeout(() => {
-      actionExecutedRef.current = false;
-      setShowActionMenu(true);
+      if (bubbleRef.current) {
+        context.open(bubbleRef.current);
+      }
       setIsLongPressing(false);
       // Haptic feedback on supported devices
       if (navigator.vibrate) {
@@ -144,18 +145,21 @@ export function MessageBubble({
     if (isDeleted || isSelectMode) return;
     
     e.preventDefault();
-    actionExecutedRef.current = false;
-    setShowActionMenu(true);
+    if (bubbleRef.current) {
+      context.open(bubbleRef.current);
+    }
   };
 
   // Handle double-click for quick reactions
   const handleDoubleClick = () => {
     if (isDeleted || isSelectMode) return;
-    actionExecutedRef.current = false;
-    setShowActionMenu(true);
+    if (bubbleRef.current) {
+      context.open(bubbleRef.current);
+    }
   };
 
   return (
+    <>
     <AnimatedDiv
       variant="fadeInUp"
       data-message-id={messageId}
@@ -196,6 +200,7 @@ export function MessageBubble({
           )}
           
           <div
+            ref={bubbleRef}
             className={cn(
               "px-3 py-2 rounded-2xl transition-all duration-200 inline-block relative",
               isCurrentUser
@@ -288,96 +293,20 @@ export function MessageBubble({
           </motion.div>
         )}
       </div>
-      
-      {/* Action Menu (Reactions + Delete) - WhatsApp-style */}
-      {showActionMenu && (
-        <>
-          {/* Backdrop */}
-          <AnimatedDiv
-            variant="fadeIn"
-            className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm" 
-            onClick={() => setShowActionMenu(false)}
-            onTouchEnd={(e) => {
-              e.preventDefault();
-              setShowActionMenu(false);
-            }}
-          />
-          
-          {/* Action Menu */}
-          <motion.div
-            initial={{ scale: 0.95, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.95, opacity: 0 }}
-            transition={{
-              type: "spring",
-              stiffness: 500,
-              damping: 30,
-            }}
-            className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[340px] max-w-[90vw]"
-            onClick={(e) => e.stopPropagation()}
-            onTouchStart={(e) => e.stopPropagation()}
-            onTouchEnd={(e) => e.stopPropagation()}
-          >
-            {/* Reactions Bar */}
-            <div className="bg-[#2d3748] rounded-full shadow-2xl px-4 py-3 mb-3">
-              <div className="flex justify-between items-center gap-2">
-                {REACTION_EMOJIS.map((emoji) => (
-                  <button
-                    key={emoji}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (actionExecutedRef.current) return;
-                      actionExecutedRef.current = true;
-                      onReaction?.(emoji);
-                      setShowActionMenu(false);
-                    }}
-                    onTouchEnd={(e) => {
-                      e.stopPropagation();
-                      e.preventDefault();
-                      if (actionExecutedRef.current) return;
-                      actionExecutedRef.current = true;
-                      onReaction?.(emoji);
-                      setShowActionMenu(false);
-                    }}
-                    className="text-[32px] hover:scale-125 active:scale-110 transition-transform p-2"
-                  >
-                    {emoji}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Delete Option - only for current user's messages */}
-            {isCurrentUser && (
-              <div className="bg-[#2d3748] rounded-2xl shadow-2xl overflow-hidden">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (actionExecutedRef.current) return;
-                    actionExecutedRef.current = true;
-                    onDelete?.();
-                    setShowActionMenu(false);
-                  }}
-                  onTouchEnd={(e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    if (actionExecutedRef.current) return;
-                    actionExecutedRef.current = true;
-                    onDelete?.();
-                    setShowActionMenu(false);
-                  }}
-                  className="w-full flex items-center gap-3 px-5 py-4 hover:bg-[#374151] active:bg-[#374151] transition-colors text-white"
-                >
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                  <span className="font-medium">Delete for you</span>
-                </button>
-              </div>
-            )}
-          </motion.div>
-        </>
-      )}
     </AnimatedDiv>
+
+    {/* Anchored context menu (reactions + actions) rendered via portal */}
+    <MessageContextMenu
+      isOpen={context.isOpen}
+      position={context.menuPosition}
+      isCurrentUser={isCurrentUser}
+      content={content}
+      isGroupedWithPrev={isGroupedWithPrev}
+      isGroupedWithNext={isGroupedWithNext}
+      onClose={context.close}
+      onReaction={onReaction}
+      onDelete={onDelete}
+    />
+    </>
   );
 }
