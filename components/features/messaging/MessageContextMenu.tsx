@@ -98,7 +98,7 @@ export function MessageContextMenu({
           left: position.reactionLeft,
           zIndex: 50,
         }}
-        className="bg-white rounded-full shadow-xl border border-gray-200 px-1.5 py-1.5"
+        className="bg-white dark:bg-[#242424] rounded-full shadow-xl border border-gray-200 dark:border-[#2d2d2d] px-1.5 py-1.5"
         onClick={(e) => e.stopPropagation()}
         onTouchEnd={(e) => e.stopPropagation()}
       >
@@ -140,7 +140,7 @@ export function MessageContextMenu({
             ? { right: position.actionRight }
             : { left: position.actionLeft ?? 0 }),
         }}
-        className="bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden min-w-[120px]"
+        className="bg-white dark:bg-[#242424] rounded-xl shadow-xl border border-gray-200 dark:border-[#2d2d2d] overflow-hidden min-w-[120px]"
         onClick={(e) => e.stopPropagation()}
         onTouchEnd={(e) => e.stopPropagation()}
       >
@@ -152,7 +152,7 @@ export function MessageContextMenu({
             e.stopPropagation();
             handleCopy();
           }}
-          className="w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-50 active:bg-gray-100 transition-colors text-gray-700"
+          className="w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-50 dark:hover:bg-[#2a2a2a] active:bg-gray-100 dark:active:bg-[#2e2e2e] transition-colors text-gray-700 dark:text-gray-300"
         >
           <svg
             className="w-3.5 h-3.5 shrink-0"

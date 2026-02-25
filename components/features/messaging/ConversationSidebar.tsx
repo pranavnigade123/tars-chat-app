@@ -60,14 +60,14 @@ function ConversationItem({ conversation, isSelected }: ConversationItemProps) {
       className={cn(
         "w-full flex items-center gap-3 p-3 transition-all duration-200 text-left relative group",
         isSelected 
-          ? "bg-gradient-to-r from-blue-50 to-blue-100 border-l-4 border-blue-500" 
+          ? "bg-blue-50 dark:bg-[#2a2a2a] border-l-4 border-blue-500 dark:border-blue-400" 
           : hasUnread
-          ? "bg-blue-50/30 hover:bg-blue-50/50 border-l-4 border-transparent"
-          : "hover:bg-gray-50 border-l-4 border-transparent"
+          ? "bg-blue-50/30 dark:bg-[#272727] hover:bg-blue-50/50 dark:hover:bg-[#2a2a2a] border-l-4 border-transparent"
+          : "hover:bg-gray-50 dark:hover:bg-[#222222] border-l-4 border-transparent"
       )}
     >
       <div className="relative shrink-0">
-        <Avatar className="h-12 w-12 ring-2 ring-white shadow-sm">
+        <Avatar className="h-12 w-12 ring-2 ring-white dark:ring-[#1e1e1e] shadow-sm">
           <AvatarImage
             src={conversation.otherUser.profileImage}
             alt={conversation.otherUser.name}
@@ -79,7 +79,7 @@ function ConversationItem({ conversation, isSelected }: ConversationItemProps) {
         {/* Online status indicator */}
         {isOnline && (
           <div 
-            className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-green-500 ring-2 ring-white"
+            className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-green-500 ring-2 ring-white dark:ring-[#1e1e1e]"
             title="Online"
           />
         )}
@@ -89,7 +89,7 @@ function ConversationItem({ conversation, isSelected }: ConversationItemProps) {
         <div className="flex items-center justify-between gap-2">
           <p className={cn(
             "font-semibold truncate transition-colors",
-            isSelected ? "text-blue-900" : "text-gray-900"
+            isSelected ? "text-blue-900 dark:text-blue-300" : "text-gray-900 dark:text-gray-100"
           )}>
             {conversation.otherUser.name}
           </p>
@@ -97,7 +97,7 @@ function ConversationItem({ conversation, isSelected }: ConversationItemProps) {
             {conversation.latestMessage && !isTyping && (
               <span className={cn(
                 "text-xs font-medium",
-                hasUnread ? "text-blue-600" : "text-gray-500"
+                hasUnread ? "text-blue-600 dark:text-blue-400" : "text-gray-500 dark:text-gray-400"
               )}>
                 {formatTimestamp(conversation.latestMessage.sentAt)}
               </span>
@@ -110,7 +110,7 @@ function ConversationItem({ conversation, isSelected }: ConversationItemProps) {
             {conversation.latestMessage && (
               <p className={cn(
                 "text-sm truncate",
-                hasUnread ? "text-gray-900 font-semibold" : "text-gray-600"
+                hasUnread ? "text-gray-900 dark:text-gray-200 font-semibold" : "text-gray-600 dark:text-gray-400"
               )}>
                 {truncateMessage(conversation.latestMessage.content, 50)}
               </p>
@@ -125,7 +125,7 @@ function ConversationItem({ conversation, isSelected }: ConversationItemProps) {
           
           {/* Unread badge - inline with message preview */}
           {hasUnread && (
-            <div className="shrink-0 min-w-[20px] h-5 px-1.5 rounded-full bg-blue-600 text-white text-xs flex items-center justify-center font-bold">
+            <div className="shrink-0 min-w-[20px] h-5 px-1.5 rounded-full bg-blue-600 dark:bg-blue-500 text-white text-xs flex items-center justify-center font-bold">
               {unreadCount > 99 ? '99+' : unreadCount}
             </div>
           )}
@@ -200,16 +200,16 @@ export function ConversationSidebar({
   }
 
   return (
-    <div className="flex h-full flex-col bg-white shadow-sm">
-      <div className="border-b bg-gradient-to-r from-gray-50 to-white p-4">
+    <div className="flex h-full flex-col bg-white dark:bg-[#1a1a1a] shadow-sm">
+      <div className="border-b dark:border-[#2d2d2d] bg-gradient-to-r from-gray-50 to-white dark:from-[#1a1a1a] dark:to-[#1a1a1a] p-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold text-gray-900">Messages</h2>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Messages</h2>
           <Link
             href="/users"
-            className="rounded-xl p-2 hover:bg-blue-50 transition-all duration-200 hover:shadow-sm group"
+            className="rounded-xl p-2 hover:bg-blue-50 dark:hover:bg-gray-700 transition-all duration-200 hover:shadow-sm group"
             title="Start new chat"
           >
-            <Plus className="h-5 w-5 text-gray-600 group-hover:text-blue-600 transition-colors" />
+            <Plus className="h-5 w-5 text-gray-600 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
           </Link>
         </div>
       </div>
