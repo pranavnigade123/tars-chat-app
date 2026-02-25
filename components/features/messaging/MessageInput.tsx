@@ -3,10 +3,12 @@
 import { useState, useRef, KeyboardEvent, useCallback, useEffect } from "react";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { Send, Smile } from "lucide-react";
+import { Send, Smile, AlertCircle } from "lucide-react";
 import type { Id } from "@/convex/_generated/dataModel";
 import { useDebounce } from "@/lib/hooks/useDebouncedCallback";
 import { cn } from "@/lib/utils";
+
+const MAX_MESSAGE_LENGTH = 5000;
 
 interface MessageInputProps {
   conversationId: Id<"conversations">;
@@ -129,6 +131,12 @@ export function MessageInput({ conversationId, onMessageSent }: MessageInputProp
       return;
     }
 
+    // Validate message length
+    if (trimmedContent.length > MAX_MESSAGE_LENGTH) {
+      setError(`Message is too long (${trimmedContent.length.toLocaleString()}/${MAX_MESSAGE_LENGTH.toLocaleString()} characters)`);
+      return;
+    }
+
     setIsSending(true);
     setError(null);
 
@@ -208,10 +216,30 @@ export function MessageInput({ conversationId, onMessageSent }: MessageInputProp
         </div>
       )}
       
+      {/* Character count warning */}
+      {content.length > MAX_MESSAGE_LENGTH * 0.9 && (
+        <div className={cn(
+          "mb-3 rounded-xl border p-3 text-sm flex items-center gap-2",
+          content.length > MAX_MESSAGE_LENGTH
+            ? "bg-red-50 border-red-200 text-red-600"
+            : "bg-amber-50 border-amber-200 text-amber-700"
+        )}>
+          <AlertCircle className="h-4 w-4 shrink-0" />
+          <span>
+            {content.length > MAX_MESSAGE_LENGTH ? (
+              <>Message exceeds maximum length by {(content.length - MAX_MESSAGE_LENGTH).toLocaleString()} characters</>
+            ) : (
+              <>Approaching character limit: {content.length.toLocaleString()}/{MAX_MESSAGE_LENGTH.toLocaleString()}</>
+            )}
+          </span>
+        </div>
+      )}
+      
       <div 
         className={cn(
           "flex items-end gap-2 rounded-2xl border-2 bg-gray-50 px-4 py-2 transition-all duration-200",
-          isFocused ? "border-blue-500 bg-white shadow-md" : "border-gray-200"
+          isFocused ? "border-blue-500 bg-white shadow-md" : "border-gray-200",
+          content.length > MAX_MESSAGE_LENGTH && "border-red-300"
         )}
       >
         <button
@@ -240,22 +268,36 @@ export function MessageInput({ conversationId, onMessageSent }: MessageInputProp
         
         <button
           onClick={handleSend}
-          disabled={isSending || !content.trim()}
+          disabled={isSending || !content.trim() || content.length > MAX_MESSAGE_LENGTH}
           className={cn(
             "mb-1 flex h-9 w-9 items-center justify-center rounded-full transition-all duration-200",
-            content.trim() && !isSending
+            content.trim() && !isSending && content.length <= MAX_MESSAGE_LENGTH
               ? "bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-md hover:shadow-lg hover:scale-105 active:scale-95"
               : "bg-gray-200 text-gray-400 cursor-not-allowed"
           )}
-          title="Send message"
+          title={content.length > MAX_MESSAGE_LENGTH ? "Message too long" : "Send message"}
         >
           <Send className="h-4 w-4" />
         </button>
       </div>
       
-      <p className="mt-2 text-xs text-gray-500 px-1">
-        Press <kbd className="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs">Enter</kbd> to send, <kbd className="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs">Shift+Enter</kbd> for new line
-      </p>
+      <div className="mt-2 flex items-center justify-between px-1">
+        <p className="text-xs text-gray-500">
+          Press <kbd className="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs">Enter</kbd> to send, <kbd className="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs">Shift+Enter</kbd> for new line
+        </p>
+        {content.length > 0 && (
+          <p className={cn(
+            "text-xs",
+            content.length > MAX_MESSAGE_LENGTH 
+              ? "text-red-600 font-medium" 
+              : content.length > MAX_MESSAGE_LENGTH * 0.9
+              ? "text-amber-600"
+              : "text-gray-400"
+          )}>
+            {content.length.toLocaleString()}/{MAX_MESSAGE_LENGTH.toLocaleString()}
+          </p>
+        )}
+      </div>
     </div>
   );
 }
