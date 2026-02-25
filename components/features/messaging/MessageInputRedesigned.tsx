@@ -282,7 +282,7 @@ export function MessageInputRedesigned({ conversationId, onMessageSent }: Messag
           placeholder="Message..."
           disabled={isSending}
           rows={1}
-          className="flex-1 resize-none bg-transparent text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none disabled:cursor-not-allowed max-h-[120px] text-[15px] leading-relaxed"
+          className="flex-1 resize-none bg-transparent text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none disabled:cursor-not-allowed max-h-[120px] text-base leading-relaxed"
         />
         
         <AnimatedButton
