@@ -24,16 +24,16 @@ export function NoMessagesEmpty({
         transition={{ delay: 0.1, duration: 0.3 }}
         className="mb-4"
       >
-        <div className="rounded-2xl bg-gray-100 p-5">
-          <MessageCircle className="h-10 w-10 text-gray-400" strokeWidth={1.5} />
+        <div className="rounded-2xl bg-gray-100 dark:bg-[#2a2a2a] p-5">
+          <MessageCircle className="h-10 w-10 text-gray-400 dark:text-gray-500" strokeWidth={1.5} />
         </div>
       </motion.div>
       
       {/* Content */}
-      <h3 className="text-base font-semibold text-gray-900 mb-2">
+      <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-2">
         No messages yet
       </h3>
-      <p className="text-sm text-gray-500 max-w-xs">
+      <p className="text-sm text-gray-500 dark:text-gray-400 max-w-xs">
         Start the conversation with {otherParticipantName}
       </p>
     </motion.div>

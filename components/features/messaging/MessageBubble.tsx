@@ -170,7 +170,7 @@ export function MessageBubble({
       className={cn(
         "flex gap-3 group w-full",
         isCurrentUser ? "flex-row-reverse" : "flex-row",
-        !isGroupedWithPrev && "mt-6"
+        !isGroupedWithPrev && "mt-3"
       )}
       style={{
         WebkitUserSelect: isCurrentUser && !isDeleted && !isSelectMode ? 'none' : 'auto',
@@ -315,15 +315,15 @@ export function MessageBubble({
                 className={cn(
                   "flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs transition-all",
                   data.hasCurrentUser
-                    ? "bg-blue-100 border border-blue-300 hover:bg-blue-200"
-                    : "bg-gray-100 border border-gray-200 hover:bg-gray-200"
+                    ? "bg-blue-100 dark:bg-blue-900/30 border border-blue-300 dark:border-blue-700 hover:bg-blue-200 dark:hover:bg-blue-900/50"
+                    : "bg-gray-100 dark:bg-[#333333] border border-gray-200 dark:border-[#444444] hover:bg-gray-200 dark:hover:bg-[#3a3a3a]"
                 )}
               >
                 <span className="text-[13px]">{emoji}</span>
                 {data.count > 1 && (
                   <span className={cn(
                     "font-medium text-[11px]",
-                    data.hasCurrentUser ? "text-blue-700" : "text-gray-700"
+                    data.hasCurrentUser ? "text-blue-700 dark:text-blue-300" : "text-gray-700 dark:text-gray-300"
                   )}>
                     {data.count}
                   </span>

@@ -31,16 +31,16 @@ export function NoConversationsEmpty({
         transition={{ delay: 0.1, duration: 0.3 }}
         className="mb-6"
       >
-        <div className="rounded-2xl bg-gray-100 p-6">
-          <MessageSquare className="h-12 w-12 text-gray-400" strokeWidth={1.5} />
+        <div className="rounded-2xl bg-gray-100 dark:bg-[#2a2a2a] p-6">
+          <MessageSquare className="h-12 w-12 text-gray-400 dark:text-gray-500" strokeWidth={1.5} />
         </div>
       </motion.div>
       
       {/* Content */}
-      <h3 className="text-lg font-semibold text-gray-900 mb-2">
+      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
         No conversations yet
       </h3>
-      <p className="text-sm text-gray-500 mb-6 max-w-xs">
+      <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 max-w-xs">
         Start a conversation with someone from your contacts
       </p>
       
