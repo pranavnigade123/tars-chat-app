@@ -39,15 +39,15 @@ export function UserListItem({ user, onClick, isSelected = false, index }: UserL
         scaleOnTap={true}
         scaleOnHover={false}
         className={cn(
-          "w-full flex items-center gap-3 p-3 lg:gap-4 lg:p-4 rounded-xl transition-colors text-left",
+          "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors text-left",
           "hover:bg-gray-50",
           isSelected && "bg-blue-50 hover:bg-blue-50"
         )}
       >
-        <div className="relative">
-          <Avatar className="h-12 w-12 lg:h-14 lg:w-14">
+        <div className="relative shrink-0">
+          <Avatar className="h-11 w-11">
             <AvatarImage src={user.profileImage} alt={user.name} />
-            <AvatarFallback className="bg-gray-200 text-gray-700 text-sm lg:text-base font-medium">
+            <AvatarFallback className="bg-gray-200 text-gray-700 text-sm font-medium">
               {getInitials(user.name)}
             </AvatarFallback>
           </Avatar>
@@ -59,8 +59,8 @@ export function UserListItem({ user, onClick, isSelected = false, index }: UserL
         </div>
         
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-gray-900 truncate mb-0.5 text-sm lg:text-base">{user.name}</p>
-          <p className="text-xs lg:text-sm text-gray-500 truncate">
+          <p className="font-semibold text-gray-900 truncate mb-0.5 text-sm">{user.name}</p>
+          <p className="text-xs text-gray-500 truncate">
             {user.isOnline ? "Online" : formatLastSeen(user.lastSeen)}
           </p>
         </div>

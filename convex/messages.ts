@@ -82,8 +82,8 @@ export const sendMessage = mutation({
       throw new Error("Message content cannot be empty");
     }
 
-    if (trimmedContent.length > 10000) {
-      throw new Error("Message content exceeds maximum length of 10,000 characters");
+    if (trimmedContent.length > 5000) {
+      throw new Error("Message content exceeds maximum length of 5,000 characters");
     }
 
     // Verify conversation exists and user is a participant

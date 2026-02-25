@@ -74,40 +74,40 @@ function ConversationItem({ conversation, isSelected, index }: ConversationItemP
       scaleOnTap={true}
       scaleOnHover={false}
       className={cn(
-        "w-full flex items-center gap-3 px-3 py-3 lg:gap-4 lg:px-4 lg:py-4 transition-colors text-left",
+        "w-full flex items-center gap-3 px-3 py-2.5 transition-colors text-left rounded-xl",
         isSelected 
           ? "bg-gray-50" 
           : "hover:bg-gray-50/50"
       )}
     >
       <div className="relative shrink-0">
-        <Avatar className="h-12 w-12 lg:h-14 lg:w-14">
+        <Avatar className="h-11 w-11">
           <AvatarImage
             src={conversation.otherUser.profileImage}
             alt={conversation.otherUser.name}
           />
-          <AvatarFallback className="bg-gray-200 text-gray-700 text-sm lg:text-base font-medium">
+          <AvatarFallback className="bg-gray-200 text-gray-700 text-sm font-medium">
             {getInitials(conversation.otherUser.name)}
           </AvatarFallback>
         </Avatar>
         {isOnline && (
           <div 
-            className="absolute bottom-0 right-0 h-3 w-3 lg:h-3.5 lg:w-3.5 rounded-full bg-green-500 ring-2 ring-white"
+            className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-green-500 ring-2 ring-white"
             aria-label="Online"
           />
         )}
       </div>
 
       <div className="flex-1 min-w-0">
-        <div className="flex items-baseline justify-between gap-2 mb-0.5 lg:mb-1">
+        <div className="flex items-baseline justify-between gap-2 mb-0.5">
           <h3 className={cn(
-            "font-semibold truncate text-sm lg:text-[15px]",
+            "font-semibold truncate text-sm",
             hasUnread ? "text-gray-900" : "text-gray-800"
           )}>
             {conversation.otherUser.name}
           </h3>
           {conversation.latestMessage && !isTyping && (
-            <span className="text-[11px] lg:text-xs text-gray-500 shrink-0">
+            <span className="text-[11px] text-gray-500 shrink-0">
               {formatTimestamp(conversation.latestMessage.sentAt, "preview")}
             </span>
           )}
@@ -115,7 +115,7 @@ function ConversationItem({ conversation, isSelected, index }: ConversationItemP
         
         <div className="flex items-center gap-2">
           <p className={cn(
-            "text-xs lg:text-sm truncate flex-1",
+            "text-xs truncate flex-1",
             hasUnread ? "text-gray-900 font-medium" : "text-gray-500"
           )}>
             {isTyping ? (
@@ -128,7 +128,7 @@ function ConversationItem({ conversation, isSelected, index }: ConversationItemP
           </p>
           
           {hasUnread && (
-            <AnimatedBadge className="shrink-0 min-w-[18px] h-[18px] lg:min-w-[20px] lg:h-5 px-1.5 rounded-full bg-blue-600 text-white text-[10px] lg:text-xs flex items-center justify-center font-semibold">
+            <AnimatedBadge className="shrink-0 min-w-[18px] h-[18px] px-1.5 rounded-full bg-blue-600 text-white text-[10px] flex items-center justify-center font-semibold">
               {unreadCount > 99 ? '99+' : unreadCount}
             </AnimatedBadge>
           )}
