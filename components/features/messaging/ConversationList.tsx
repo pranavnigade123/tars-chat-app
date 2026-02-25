@@ -76,8 +76,8 @@ function ConversationItem({ conversation, isSelected, index }: ConversationItemP
       className={cn(
         "w-full flex items-center gap-3 px-3 py-2.5 transition-colors text-left rounded-xl",
         isSelected 
-          ? "bg-gray-50" 
-          : "hover:bg-gray-50/50"
+          ? "bg-gray-100 dark:bg-[#2a2a2a]" 
+          : "hover:bg-gray-50 dark:hover:bg-[#222222]"
       )}
     >
       <div className="relative shrink-0">
@@ -86,13 +86,13 @@ function ConversationItem({ conversation, isSelected, index }: ConversationItemP
             src={conversation.otherUser.profileImage}
             alt={conversation.otherUser.name}
           />
-          <AvatarFallback className="bg-gray-200 text-gray-700 text-sm font-medium">
+          <AvatarFallback className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium">
             {getInitials(conversation.otherUser.name)}
           </AvatarFallback>
         </Avatar>
         {isOnline && (
           <div 
-            className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-green-500 ring-2 ring-white"
+            className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-green-500 ring-2 ring-white dark:ring-[#121212]"
             aria-label="Online"
           />
         )}
@@ -102,12 +102,12 @@ function ConversationItem({ conversation, isSelected, index }: ConversationItemP
         <div className="flex items-baseline justify-between gap-2 mb-0.5">
           <h3 className={cn(
             "font-semibold truncate text-sm",
-            hasUnread ? "text-gray-900" : "text-gray-800"
+            hasUnread ? "text-gray-900 dark:text-gray-100" : "text-gray-800 dark:text-gray-200"
           )}>
             {conversation.otherUser.name}
           </h3>
           {conversation.latestMessage && !isTyping && (
-            <span className="text-[11px] text-gray-500 shrink-0">
+            <span className="text-[11px] text-gray-500 dark:text-gray-400 shrink-0">
               {formatTimestamp(conversation.latestMessage.sentAt, "preview")}
             </span>
           )}
@@ -116,19 +116,19 @@ function ConversationItem({ conversation, isSelected, index }: ConversationItemP
         <div className="flex items-center gap-2">
           <p className={cn(
             "text-xs truncate flex-1",
-            hasUnread ? "text-gray-900 font-medium" : "text-gray-500"
+            hasUnread ? "text-gray-900 dark:text-gray-200 font-medium" : "text-gray-500 dark:text-gray-400"
           )}>
             {isTyping ? (
-              <span className="text-blue-600 italic">typing...</span>
+              <span className="text-blue-600 dark:text-blue-400 italic">typing...</span>
             ) : conversation.latestMessage ? (
               truncateMessage(conversation.latestMessage.content, 60)
             ) : (
-              <span className="text-gray-400">No messages yet</span>
+              <span className="text-gray-400 dark:text-gray-500">No messages yet</span>
             )}
           </p>
           
           {hasUnread && (
-            <AnimatedBadge className="shrink-0 min-w-[18px] h-[18px] px-1.5 rounded-full bg-blue-600 text-white text-[10px] flex items-center justify-center font-semibold">
+            <AnimatedBadge className="shrink-0 min-w-[18px] h-[18px] px-1.5 rounded-full bg-blue-600 dark:bg-blue-500 text-white text-[10px] flex items-center justify-center font-semibold">
               {unreadCount > 99 ? '99+' : unreadCount}
             </AnimatedBadge>
           )}
@@ -206,7 +206,7 @@ export function ConversationList({ selectedConversationId, searchQuery = "", onS
               placeholder="Search conversations..."
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
-              className="w-full rounded-xl border border-gray-200 bg-gray-50 py-2.5 pl-10 pr-4 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+              className="w-full rounded-xl border border-gray-200 dark:border-[#2d2d2d] bg-gray-50 dark:bg-[#1e1e1e] py-2.5 pl-10 pr-4 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:border-blue-500 dark:focus:border-blue-400 focus:bg-white dark:focus:bg-[#242424] focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
             />
           </div>
         </div>
@@ -230,7 +230,7 @@ export function ConversationList({ selectedConversationId, searchQuery = "", onS
             placeholder="Search conversations..."
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="w-full rounded-xl border border-gray-200 bg-gray-50 py-2.5 pl-10 pr-4 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+            className="w-full rounded-xl border border-gray-200 dark:border-[#2d2d2d] bg-gray-50 dark:bg-[#171717] py-2.5 pl-10 pr-4 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:border-blue-500 dark:focus:border-blue-400 focus:bg-white dark:focus:bg-[#1e1e1e] focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
           />
         </div>
       </div>

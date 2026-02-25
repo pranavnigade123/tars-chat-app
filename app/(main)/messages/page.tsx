@@ -199,16 +199,16 @@ function MessagesPageContent() {
   // Desktop: Vertical sidebar nav + conversation list + chat
   return (
     <>
-      <div className="flex h-dvh bg-white overflow-hidden">
+      <div className="flex h-dvh bg-white dark:bg-[#1a1a1a] overflow-hidden">
         {/* Desktop Vertical Sidebar Navigation - Hidden on Mobile */}
-        <div className="hidden lg:flex lg:flex-col lg:w-16 lg:border-r lg:border-gray-200 lg:bg-gray-50 lg:items-center lg:py-4 lg:gap-2">
+        <div className="hidden lg:flex lg:flex-col lg:w-16 lg:border-r lg:border-gray-200 dark:lg:border-[#2d2d2d] lg:bg-gray-50 dark:lg:bg-[#1e1e1e] lg:items-center lg:py-4 lg:gap-2">
           <Link
             href="/messages"
             className={cn(
               "flex flex-col items-center justify-center w-12 h-12 rounded-xl transition-colors gap-1",
               pathname.startsWith("/messages")
-                ? "bg-blue-100 text-blue-600"
-                : "text-gray-600 hover:bg-gray-100"
+                ? "bg-blue-100 dark:bg-[#2a2a2a] text-blue-600 dark:text-gray-200"
+                : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#2a2a2a]"
             )}
           >
             <MessageSquare className="h-5 w-5" />
@@ -219,8 +219,8 @@ function MessagesPageContent() {
             className={cn(
               "flex flex-col items-center justify-center w-12 h-12 rounded-xl transition-colors gap-1",
               pathname === "/users"
-                ? "bg-blue-100 text-blue-600"
-                : "text-gray-600 hover:bg-gray-100"
+                ? "bg-blue-100 dark:bg-[#2a2a2a] text-blue-600 dark:text-gray-200"
+                : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#2a2a2a]"
             )}
           >
             <Users className="h-5 w-5" />
@@ -231,8 +231,8 @@ function MessagesPageContent() {
             className={cn(
               "flex flex-col items-center justify-center w-12 h-12 rounded-xl transition-colors gap-1 mt-auto",
               pathname === "/profile"
-                ? "bg-blue-100 text-blue-600"
-                : "text-gray-600 hover:bg-gray-100"
+                ? "bg-blue-100 dark:bg-[#2a2a2a] text-blue-600 dark:text-gray-200"
+                : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#2a2a2a]"
             )}
           >
             <User className="h-5 w-5" />
@@ -243,7 +243,7 @@ function MessagesPageContent() {
         {/* Main Content Area */}
         <div className="flex flex-col lg:flex-row flex-1 overflow-hidden relative">
           {/* Desktop: Always show conversation list */}
-          <div className="hidden lg:flex lg:flex-col lg:h-full lg:w-80 lg:border-r lg:border-gray-100 lg:shrink-0">
+          <div className="hidden lg:flex lg:flex-col lg:h-full lg:w-80 lg:border-r lg:border-gray-100 dark:lg:border-[#2d2d2d] lg:shrink-0">
             <ConversationListHeader />
             <div className="flex-1 overflow-y-auto">
               <ConversationList 
@@ -304,7 +304,7 @@ function MessagesPageContent() {
                   stiffness: 600,
                   damping: 35,
                 }}
-                className="flex flex-col h-full w-full lg:flex-1 lg:bg-gray-50 absolute inset-0 lg:relative bg-white"
+                className="flex flex-col h-full w-full lg:flex-1 lg:bg-gray-50 dark:lg:bg-[#1a1a1a] absolute inset-0 lg:relative bg-white dark:bg-[#1a1a1a]"
               >
             <ChatHeader
               name={conversation?.otherUser?.name || "Loading..."}
@@ -325,7 +325,7 @@ function MessagesPageContent() {
               animate={{ opacity: 1 }}
               transition={{ duration: 0.2 }}
               ref={scrollContainerRef}
-              className="flex-1 overflow-y-auto px-4 py-4 bg-white pb-[calc(env(safe-area-inset-bottom)+100px)] lg:pb-6 flex flex-col"
+              className="flex-1 overflow-y-auto px-4 py-4 bg-white dark:bg-[#1a1a1a] pb-[calc(env(safe-area-inset-bottom)+100px)] lg:pb-6 flex flex-col"
               style={{ 
                 overflowAnchor: 'none',
               }}
@@ -471,7 +471,7 @@ function MessagesPageContent() {
             </div>
 
             {/* Input - Fixed to bottom on mobile, static on desktop */}
-            <div className="fixed bottom-0 left-0 right-0 lg:static lg:bottom-0 bg-white pb-[env(safe-area-inset-bottom)]">
+            <div className="fixed bottom-0 left-0 right-0 lg:static lg:bottom-0 bg-white dark:bg-[#1a1a1a] pb-[env(safe-area-inset-bottom)]">
               <MessageInputRedesigned
                 conversationId={conversationId}
                 onMessageSent={handleMessageSent}
@@ -483,7 +483,7 @@ function MessagesPageContent() {
           
           {/* Desktop: Empty state when no chat selected */}
           {!conversationId && (
-            <div className="hidden lg:flex lg:flex-1 lg:items-center lg:justify-center lg:bg-gray-50">
+            <div className="hidden lg:flex lg:flex-1 lg:items-center lg:justify-center lg:bg-gray-50 dark:lg:bg-[#1a1a1a]">
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -491,14 +491,14 @@ function MessagesPageContent() {
                 className="text-center p-8"
               >
                 <div className="mb-4">
-                  <div className="inline-block rounded-2xl bg-white p-6 shadow-sm">
-                    <MessageSquare className="h-12 w-12 text-gray-300" strokeWidth={1.5} />
+                  <div className="inline-block rounded-2xl bg-white dark:bg-[#242424] p-6 shadow-sm">
+                    <MessageSquare className="h-12 w-12 text-gray-300 dark:text-gray-600" strokeWidth={1.5} />
                   </div>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
                   Select a conversation
                 </h3>
-                <p className="text-sm text-gray-500 max-w-xs mx-auto">
+                <p className="text-sm text-gray-500 dark:text-gray-400 max-w-xs mx-auto">
                   Choose a conversation from the list to start messaging
                 </p>
               </motion.div>

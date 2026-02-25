@@ -198,17 +198,17 @@ export function MessageInput({ conversationId, onMessageSent }: MessageInputProp
   };
 
   return (
-    <div className="border-t bg-white px-4 py-3 shadow-sm">
+    <div className="border-t dark:border-[#2d2d2d] bg-white dark:bg-[#1a1a1a] px-4 py-3 shadow-sm">
       {error && (
-        <div className="mb-3 rounded-xl bg-red-50 border border-red-200 p-3 text-sm text-red-600 flex items-center justify-between">
+        <div className="mb-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 p-3 text-sm text-red-600 dark:text-red-400 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="text-red-500">⚠</span>
+            <span className="text-red-500 dark:text-red-400">⚠</span>
             {error}
           </div>
           {failedMessage && (
             <button
               onClick={handleRetry}
-              className="text-blue-600 hover:text-blue-700 font-medium transition-colors"
+              className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-colors"
             >
               Retry
             </button>
@@ -221,8 +221,8 @@ export function MessageInput({ conversationId, onMessageSent }: MessageInputProp
         <div className={cn(
           "mb-3 rounded-xl border p-3 text-sm flex items-center gap-2",
           content.length > MAX_MESSAGE_LENGTH
-            ? "bg-red-50 border-red-200 text-red-600"
-            : "bg-amber-50 border-amber-200 text-amber-700"
+            ? "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-700 text-red-600 dark:text-red-400"
+            : "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-700 text-amber-700 dark:text-amber-400"
         )}>
           <AlertCircle className="h-4 w-4 shrink-0" />
           <span>
@@ -237,14 +237,14 @@ export function MessageInput({ conversationId, onMessageSent }: MessageInputProp
       
       <div 
         className={cn(
-          "flex items-end gap-2 rounded-2xl border-2 bg-gray-50 px-4 py-2 transition-all duration-200",
-          isFocused ? "border-blue-500 bg-white shadow-md" : "border-gray-200",
-          content.length > MAX_MESSAGE_LENGTH && "border-red-300"
+          "flex items-end gap-2 rounded-2xl border-2 bg-gray-50 dark:bg-[#1e1e1e] px-4 py-2 transition-all duration-200",
+          isFocused ? "border-blue-500 dark:border-blue-400 bg-white dark:bg-[#242424] shadow-md" : "border-gray-200 dark:border-[#2d2d2d]",
+          content.length > MAX_MESSAGE_LENGTH && "border-red-300 dark:border-red-600"
         )}
       >
         <button
           type="button"
-          className="mb-1 p-1.5 text-gray-400 hover:text-gray-600 transition-colors rounded-lg hover:bg-gray-100"
+          className="mb-1 p-1.5 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
           title="Emoji (coming soon)"
         >
           <Smile className="h-5 w-5" />
@@ -263,7 +263,7 @@ export function MessageInput({ conversationId, onMessageSent }: MessageInputProp
           placeholder="Type a message..."
           disabled={isSending}
           rows={1}
-          className="flex-1 resize-none bg-transparent text-gray-900 placeholder:text-gray-400 focus:outline-none disabled:cursor-not-allowed max-h-[120px] py-1"
+          className="flex-1 resize-none bg-transparent text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none disabled:cursor-not-allowed max-h-[120px] py-1"
         />
         
         <button
@@ -273,7 +273,7 @@ export function MessageInput({ conversationId, onMessageSent }: MessageInputProp
             "mb-1 flex h-9 w-9 items-center justify-center rounded-full transition-all duration-200",
             content.trim() && !isSending && content.length <= MAX_MESSAGE_LENGTH
               ? "bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-md hover:shadow-lg hover:scale-105 active:scale-95"
-              : "bg-gray-200 text-gray-400 cursor-not-allowed"
+              : "bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed"
           )}
           title={content.length > MAX_MESSAGE_LENGTH ? "Message too long" : "Send message"}
         >
@@ -282,17 +282,17 @@ export function MessageInput({ conversationId, onMessageSent }: MessageInputProp
       </div>
       
       <div className="mt-2 flex items-center justify-between px-1">
-        <p className="text-xs text-gray-500">
-          Press <kbd className="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs">Enter</kbd> to send, <kbd className="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs">Shift+Enter</kbd> for new line
+        <p className="text-xs text-gray-500 dark:text-gray-400">
+          Press <kbd className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-[#2d2d2d] rounded text-xs">Enter</kbd> to send, <kbd className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-[#2d2d2d] rounded text-xs">Shift+Enter</kbd> for new line
         </p>
         {content.length > 0 && (
           <p className={cn(
             "text-xs",
             content.length > MAX_MESSAGE_LENGTH 
-              ? "text-red-600 font-medium" 
+              ? "text-red-600 dark:text-red-400 font-medium" 
               : content.length > MAX_MESSAGE_LENGTH * 0.9
-              ? "text-amber-600"
-              : "text-gray-400"
+              ? "text-amber-600 dark:text-amber-400"
+              : "text-gray-400 dark:text-gray-500"
           )}>
             {content.length.toLocaleString()}/{MAX_MESSAGE_LENGTH.toLocaleString()}
           </p>

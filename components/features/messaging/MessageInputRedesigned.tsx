@@ -213,7 +213,7 @@ export function MessageInputRedesigned({ conversationId, onMessageSent }: Messag
   };
 
   return (
-    <div className="p-3 lg:p-4 bg-gray-50 border-t border-gray-200">
+    <div className="p-3 lg:p-4 bg-gray-50 dark:bg-[#1a1a1a] border-t border-gray-200 dark:border-[#2d2d2d]">
       {error && (
         <div className="mb-2 lg:mb-3 rounded-xl bg-red-50 border border-red-100 p-2.5 lg:p-3 text-sm text-red-700 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -234,8 +234,8 @@ export function MessageInputRedesigned({ conversationId, onMessageSent }: Messag
       <div 
         onClick={handleWrapperClick}
         className={cn(
-          "flex items-center gap-3 rounded-3xl bg-white border border-gray-200 px-4 py-2.5 lg:px-5 lg:py-3 transition-all duration-200 cursor-text shadow-sm relative",
-          isFocused && "ring-2 ring-blue-500 border-blue-500 shadow-md"
+          "flex items-center gap-3 rounded-3xl bg-white dark:bg-[#242424] border border-gray-200 dark:border-[#2d2d2d] px-4 py-2.5 lg:px-5 lg:py-3 transition-all duration-200 cursor-text shadow-sm relative",
+          isFocused && "ring-2 ring-blue-500 dark:ring-blue-400 border-blue-500 dark:border-blue-400 shadow-md"
         )}
       >
         {/* Emoji Picker Popup */}

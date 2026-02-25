@@ -20,7 +20,7 @@ export default function UsersPage() {
 
   if (!isLoaded || !user) {
     return (
-      <div className="flex h-dvh items-center justify-center bg-white">
+      <div className="flex h-dvh items-center justify-center bg-white dark:bg-[#1a1a1a]">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
       </div>
     );
@@ -28,16 +28,16 @@ export default function UsersPage() {
 
   return (
     <>
-      <div className="flex h-dvh bg-white overflow-hidden">
+      <div className="flex h-dvh bg-white dark:bg-[#1a1a1a] overflow-hidden">
         {/* Desktop Vertical Sidebar Navigation - Hidden on Mobile */}
-        <div className="hidden lg:flex lg:flex-col lg:w-16 lg:border-r lg:border-gray-200 lg:bg-gray-50 lg:items-center lg:py-4 lg:gap-2">
+        <div className="hidden lg:flex lg:flex-col lg:w-16 lg:border-r lg:border-gray-200 dark:lg:border-[#2d2d2d] lg:bg-gray-50 dark:lg:bg-[#1e1e1e] lg:items-center lg:py-4 lg:gap-2">
           <Link
             href="/messages"
             className={cn(
               "flex flex-col items-center justify-center w-12 h-12 rounded-xl transition-colors gap-1",
               pathname.startsWith("/messages")
-                ? "bg-blue-100 text-blue-600"
-                : "text-gray-600 hover:bg-gray-100"
+                ? "bg-blue-100 dark:bg-[#2a2a2a] text-blue-600 dark:text-gray-200"
+                : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#2a2a2a]"
             )}
           >
             <MessageSquare className="h-5 w-5" />
@@ -48,8 +48,8 @@ export default function UsersPage() {
             className={cn(
               "flex flex-col items-center justify-center w-12 h-12 rounded-xl transition-colors gap-1",
               pathname === "/users"
-                ? "bg-blue-100 text-blue-600"
-                : "text-gray-600 hover:bg-gray-100"
+                ? "bg-blue-100 dark:bg-[#2a2a2a] text-blue-600 dark:text-gray-200"
+                : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#2a2a2a]"
             )}
           >
             <Users className="h-5 w-5" />
@@ -60,8 +60,8 @@ export default function UsersPage() {
             className={cn(
               "flex flex-col items-center justify-center w-12 h-12 rounded-xl transition-colors gap-1 mt-auto",
               pathname === "/profile"
-                ? "bg-blue-100 text-blue-600"
-                : "text-gray-600 hover:bg-gray-100"
+                ? "bg-blue-100 dark:bg-[#2a2a2a] text-blue-600 dark:text-gray-200"
+                : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#2a2a2a]"
             )}
           >
             <User className="h-5 w-5" />
@@ -82,9 +82,9 @@ export default function UsersPage() {
           className="flex flex-col flex-1 overflow-hidden"
         >
           {/* Header */}
-          <header className="sticky top-0 z-10 bg-white border-b border-gray-200">
+          <header className="sticky top-0 z-10 bg-white dark:bg-[#1a1a1a] border-b border-gray-200 dark:border-[#2d2d2d]">
             <div className="flex items-center justify-between px-4 py-3">
-              <h1 className="text-xl font-semibold text-gray-900">People</h1>
+              <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">People</h1>
               <UserButton 
                 appearance={{
                   elements: {
