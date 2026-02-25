@@ -52,6 +52,7 @@ export default function SignUpPage() {
           } : undefined
         }}
         afterSignUpUrl="/messages"
+        fallbackRedirectUrl="/messages"
       />
     </>
   );
