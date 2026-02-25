@@ -90,7 +90,11 @@ export function MessageFeed({ conversationId, currentUserId, scrollToBottomRef }
     return (
       <div className="flex h-full items-center justify-center p-4 bg-gradient-to-b from-gray-50 to-white">
         <NoMessagesEmpty
-          otherParticipantName={conversation?.otherUser?.name || "this user"}
+          otherParticipantName={
+            conversation?.isGroup 
+              ? (conversation.groupName || "this group")
+              : ((conversation as any)?.otherUser?.name || "this user")
+          }
         />
       </div>
     );

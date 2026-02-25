@@ -8,7 +8,9 @@ import { Search } from "lucide-react";
 import { api } from "@/convex/_generated/api";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AnimatedButton, AnimatedBadge } from "@/components/ui/motion";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { AnimatedButton } from "@/components/ui/motion";
 import { getInitials } from "@/lib/utils/getInitials";
 import { formatTimestamp } from "@/lib/utils/formatTimestamp";
 import { truncateMessage } from "@/lib/utils/truncateMessage";
@@ -26,7 +28,10 @@ interface ConversationListProps {
 interface ConversationItemProps {
   conversation: {
     _id: Id<"conversations">;
-    otherUser: {
+    isGroup?: boolean;
+    groupName?: string;
+    memberCount?: number;
+    otherUser?: {
       name: string;
       profileImage?: string;
       clerkId: string;
@@ -52,12 +57,16 @@ function ConversationItem({ conversation, isSelected, index }: ConversationItemP
   });
 
   const isTyping = typingUsers && typingUsers.length > 0;
-  const isOnline = conversation.otherUser.isOnline;
+  const isOnline = conversation.otherUser?.isOnline || false;
   const hasUnread = typeof unreadCount === 'number' && unreadCount > 0;
+  const isGroup = conversation.isGroup || false;
 
   const handleClick = () => {
     router.push(`/messages?conversationId=${conversation._id}`);
   };
+
+  const displayName = isGroup ? conversation.groupName : conversation.otherUser?.name;
+  const displayImage = isGroup ? undefined : conversation.otherUser?.profileImage;
 
   return (
     <motion.div
@@ -81,16 +90,25 @@ function ConversationItem({ conversation, isSelected, index }: ConversationItemP
       )}
     >
       <div className="relative shrink-0">
-        <Avatar className="h-11 w-11">
-          <AvatarImage
-            src={conversation.otherUser.profileImage}
-            alt={conversation.otherUser.name}
-          />
-          <AvatarFallback className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium">
-            {getInitials(conversation.otherUser.name)}
-          </AvatarFallback>
-        </Avatar>
-        {isOnline && (
+        {!isGroup && (
+          <Avatar className="h-11 w-11">
+            <AvatarImage
+              src={displayImage}
+              alt={displayName}
+            />
+            <AvatarFallback className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium">
+              {getInitials(displayName || "?")}
+            </AvatarFallback>
+          </Avatar>
+        )}
+        
+        {isGroup && (
+          <div className="h-11 w-11 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-semibold text-sm">
+            {getInitials(displayName || "?")}
+          </div>
+        )}
+        
+        {!isGroup && isOnline && (
           <div 
             className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-green-500 ring-2 ring-white dark:ring-[#121212]"
             aria-label="Online"
@@ -104,7 +122,7 @@ function ConversationItem({ conversation, isSelected, index }: ConversationItemP
             "font-semibold truncate text-sm",
             hasUnread ? "text-gray-900 dark:text-gray-100" : "text-gray-800 dark:text-gray-200"
           )}>
-            {conversation.otherUser.name}
+            {displayName}
           </h3>
           {conversation.latestMessage && !isTyping && (
             <span className="text-[11px] text-gray-500 dark:text-gray-400 shrink-0">
@@ -118,6 +136,11 @@ function ConversationItem({ conversation, isSelected, index }: ConversationItemP
             "text-xs truncate flex-1",
             hasUnread ? "text-gray-900 dark:text-gray-200 font-medium" : "text-gray-500 dark:text-gray-400"
           )}>
+            {isGroup && conversation.memberCount && (
+              <span className="text-gray-500 dark:text-gray-400 mr-1">
+                {conversation.memberCount} members •
+              </span>
+            )}
             {isTyping ? (
               <span className="text-blue-600 dark:text-blue-400 italic">typing...</span>
             ) : conversation.latestMessage ? (
@@ -128,9 +151,9 @@ function ConversationItem({ conversation, isSelected, index }: ConversationItemP
           </p>
           
           {hasUnread && (
-            <AnimatedBadge className="shrink-0 min-w-[18px] h-[18px] px-1.5 rounded-full bg-blue-600 dark:bg-blue-500 text-white text-[10px] flex items-center justify-center font-semibold">
+            <Badge className="shrink-0 min-w-[18px] h-[18px] px-1.5 bg-blue-600 dark:bg-blue-500 hover:bg-blue-600 dark:hover:bg-blue-500 text-white text-[10px]">
               {unreadCount > 99 ? '99+' : unreadCount}
-            </AnimatedBadge>
+            </Badge>
           )}
         </div>
       </div>
@@ -149,7 +172,15 @@ export function ConversationList({ selectedConversationId, searchQuery = "", onS
     
     const query = debouncedSearchQuery.toLowerCase().trim();
     return conversations.filter((conversation) => {
-      const nameMatch = conversation.otherUser.name.toLowerCase().includes(query);
+      // For group chats, search by group name
+      if (conversation.isGroup) {
+        const groupNameMatch = conversation.groupName?.toLowerCase().includes(query);
+        const messageMatch = conversation.latestMessage?.content.toLowerCase().includes(query);
+        return groupNameMatch || messageMatch;
+      }
+      
+      // For 1-on-1 chats, search by user name
+      const nameMatch = (conversation as any).otherUser?.name.toLowerCase().includes(query);
       const messageMatch = conversation.latestMessage?.content.toLowerCase().includes(query);
       return nameMatch || messageMatch;
     });

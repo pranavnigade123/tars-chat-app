@@ -22,7 +22,10 @@ interface ConversationSidebarProps {
 interface ConversationItemProps {
   conversation: {
     _id: Id<"conversations">;
-    otherUser: {
+    isGroup?: boolean;
+    groupName?: string;
+    memberCount?: number;
+    otherUser?: {
       name: string;
       profileImage?: string;
       clerkId: string;
@@ -47,8 +50,12 @@ function ConversationItem({ conversation, isSelected }: ConversationItemProps) {
   });
 
   const isTyping = typingUsers && typingUsers.length > 0;
-  const isOnline = conversation.otherUser.isOnline;
+  const isOnline = conversation.otherUser?.isOnline || false;
   const hasUnread = typeof unreadCount === 'number' && unreadCount > 0;
+  const isGroup = conversation.isGroup || false;
+
+  const displayName = isGroup ? conversation.groupName : conversation.otherUser?.name;
+  const displayImage = isGroup ? undefined : conversation.otherUser?.profileImage;
 
   const handleClick = () => {
     router.push(`/messages?conversationId=${conversation._id}`);
@@ -67,17 +74,26 @@ function ConversationItem({ conversation, isSelected }: ConversationItemProps) {
       )}
     >
       <div className="relative shrink-0">
-        <Avatar className="h-12 w-12 ring-2 ring-white dark:ring-[#1e1e1e] shadow-sm">
-          <AvatarImage
-            src={conversation.otherUser.profileImage}
-            alt={conversation.otherUser.name}
-          />
-          <AvatarFallback className="bg-gradient-to-br from-blue-400 to-blue-600 text-white font-medium">
-            {getInitials(conversation.otherUser.name)}
-          </AvatarFallback>
-        </Avatar>
-        {/* Online status indicator */}
-        {isOnline && (
+        {!isGroup && (
+          <Avatar className="h-12 w-12 ring-2 ring-white dark:ring-[#1e1e1e] shadow-sm">
+            <AvatarImage
+              src={displayImage}
+              alt={displayName}
+            />
+            <AvatarFallback className="bg-gradient-to-br from-blue-400 to-blue-600 text-white font-medium">
+              {getInitials(displayName || "?")}
+            </AvatarFallback>
+          </Avatar>
+        )}
+        
+        {isGroup && (
+          <div className="h-12 w-12 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-semibold ring-2 ring-white dark:ring-[#1e1e1e] shadow-sm">
+            {getInitials(displayName || "?")}
+          </div>
+        )}
+        
+        {/* Online status indicator - only for 1-on-1 chats */}
+        {!isGroup && isOnline && (
           <div 
             className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-green-500 ring-2 ring-white dark:ring-[#1e1e1e]"
             title="Online"
@@ -91,7 +107,7 @@ function ConversationItem({ conversation, isSelected }: ConversationItemProps) {
             "font-semibold truncate transition-colors",
             isSelected ? "text-blue-900 dark:text-blue-300" : "text-gray-900 dark:text-gray-100"
           )}>
-            {conversation.otherUser.name}
+            {displayName}
           </p>
           <div className="flex items-center gap-2 shrink-0">
             {conversation.latestMessage && !isTyping && (
@@ -107,6 +123,11 @@ function ConversationItem({ conversation, isSelected }: ConversationItemProps) {
         
         <div className="flex items-center justify-between gap-2">
           <div className="flex-1 min-w-0">
+            {isGroup && conversation.memberCount && (
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">
+                {conversation.memberCount} members
+              </p>
+            )}
             {conversation.latestMessage && (
               <p className={cn(
                 "text-sm truncate",

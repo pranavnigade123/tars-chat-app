@@ -10,6 +10,8 @@ interface ChatHeaderProps {
   profileImage?: string;
   status: string;
   isOnline: boolean;
+  isGroup?: boolean;
+  memberCount?: number;
   onBack: () => void;
   onToggleSelectMode?: () => void;
   isSelectMode?: boolean;
@@ -21,7 +23,9 @@ export function ChatHeader({
   name, 
   profileImage, 
   status, 
-  isOnline, 
+  isOnline,
+  isGroup = false,
+  memberCount = 0,
   onBack,
   onToggleSelectMode,
   isSelectMode = false,
@@ -44,12 +48,20 @@ export function ChatHeader({
           <ArrowLeft className="h-5 w-5 text-gray-700 dark:text-gray-300" />
         </button>
         
-        <Avatar className="h-9 w-9">
-          <AvatarImage src={profileImage} alt={name} />
-          <AvatarFallback className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium">
+        {!isGroup && (
+          <Avatar className="h-9 w-9">
+            <AvatarImage src={profileImage} alt={name} />
+            <AvatarFallback className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium">
+              {getInitials(name)}
+            </AvatarFallback>
+          </Avatar>
+        )}
+        
+        {isGroup && (
+          <div className="h-9 w-9 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-semibold text-sm">
             {getInitials(name)}
-          </AvatarFallback>
-        </Avatar>
+          </div>
+        )}
         
         <div className="flex-1 min-w-0">
           {isSelectMode ? (
@@ -59,7 +71,9 @@ export function ChatHeader({
           ) : (
             <>
               <h2 className="font-semibold text-gray-900 dark:text-gray-100 truncate">{name}</h2>
-              <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{status}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                {isGroup ? `${memberCount} members` : status}
+              </p>
             </>
           )}
         </div>

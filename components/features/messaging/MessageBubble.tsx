@@ -3,7 +3,9 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { motion } from "framer-motion";
 import { AnimatedDiv, AnimatedBadge } from "@/components/ui/motion";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatMessageTime } from "@/lib/utils/formatTimestamp";
+import { getInitials } from "@/lib/utils/getInitials";
 import { cn } from "@/lib/utils";
 import { Check, CheckCheck } from "lucide-react";
 import { useMessageContext } from "@/lib/hooks/useMessageContext";
@@ -34,6 +36,7 @@ interface MessageBubbleProps {
   reactions?: Reaction[];
   onReaction?: (emoji: string) => void;
   currentUserId?: string;
+  isGroup?: boolean;
 }
 
 export function MessageBubble({
@@ -56,6 +59,7 @@ export function MessageBubble({
   reactions = [],
   onReaction,
   currentUserId,
+  isGroup = false,
 }: MessageBubbleProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [showNewBadge, setShowNewBadge] = useState(false);
@@ -180,9 +184,20 @@ export function MessageBubble({
       onTouchEnd={handleTouchEnd}
       onTouchMove={handleTouchMove}
     >
-      {/* Avatar - Hidden for 1v1 chats, will be shown for group chats */}
-      {/* Keeping the space for alignment */}
-      <div className="w-0 shrink-0" />
+      {/* Avatar - Show for group chats when message is from other users */}
+      <div className={cn(
+        "shrink-0",
+        isGroup && !isCurrentUser ? "w-8" : "w-0"
+      )}>
+        {isGroup && !isCurrentUser && showAvatar && (
+          <Avatar className="h-8 w-8">
+            <AvatarImage src={senderImage} alt={senderName} />
+            <AvatarFallback className="text-xs bg-gradient-to-br from-blue-400 to-blue-600 text-white">
+              {getInitials(senderName || "?")}
+            </AvatarFallback>
+          </Avatar>
+        )}
+      </div>
 
       {/* Message content */}
       <div
@@ -215,10 +230,10 @@ export function MessageBubble({
           
           <div
             className={cn(
-              "px-3 py-2 rounded-2xl transition-all duration-200 inline-block relative",
+              "px-3 py-1 rounded-2xl transition-all duration-200 inline-block relative",
               isCurrentUser
                 ? "bg-blue-600 text-white"
-                : "bg-gray-100 text-gray-900",
+                : "bg-gray-100 dark:bg-[#2a2a2a] text-gray-900 dark:text-gray-100",
               // Rounded corners based on grouping
               isCurrentUser ? (
                 cn(
@@ -247,26 +262,35 @@ export function MessageBubble({
               </div>
             ) : (
               // Normal message
-              <div className="flex items-end gap-2">
-                <p className="whitespace-pre-wrap wrap-break-word leading-relaxed text-[15px]">
-                  {content}
-                </p>
-                <div className="flex items-center gap-1 shrink-0 self-end pb-px">
-                  <span className={cn(
-                    "text-[10px] leading-none",
-                    isCurrentUser ? "text-white/70" : "text-gray-500"
-                  )}>
-                    {formatMessageTime(sentAt)}
-                  </span>
-                  {isCurrentUser && (
-                    <>
-                      {isRead ? (
-                        <CheckCheck className="h-3 w-3 text-white/70" aria-label="Read" />
-                      ) : isDelivered ? (
-                        <Check className="h-3 w-3 text-white/70" aria-label="Delivered" />
-                      ) : null}
-                    </>
-                  )}
+              <div>
+                {/* Sender name for group chats - inside bubble */}
+                {isGroup && !isCurrentUser && showName && (
+                  <p className="text-xs font-semibold mb-1 text-blue-500">
+                    {senderName || "Unknown"}
+                  </p>
+                )}
+                
+                <div className="flex items-end gap-2">
+                  <p className="whitespace-pre-wrap wrap-break-word leading-relaxed text-[15px]">
+                    {content}
+                  </p>
+                  <div className="flex items-center gap-1 shrink-0 self-end pb-px">
+                    <span className={cn(
+                      "text-[10px] leading-none",
+                      isCurrentUser ? "text-white/70" : "text-gray-500 dark:text-gray-400"
+                    )}>
+                      {formatMessageTime(sentAt)}
+                    </span>
+                    {isCurrentUser && (
+                      <>
+                        {isRead ? (
+                          <CheckCheck className="h-3 w-3 text-white/70" aria-label="Read" />
+                        ) : isDelivered ? (
+                          <Check className="h-3 w-3 text-white/70" aria-label="Delivered" />
+                        ) : null}
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
             )}

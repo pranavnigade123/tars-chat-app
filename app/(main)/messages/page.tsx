@@ -14,7 +14,18 @@ import { ConversationList } from "@/components/features/messaging/ConversationLi
 import { MessageBubble } from "@/components/features/messaging/MessageBubble";
 import { MessageInputRedesigned } from "@/components/features/messaging/MessageInputRedesigned";
 import { TypingIndicator } from "@/components/features/messaging/TypingIndicator";
+import { CreateGroupDialog } from "@/components/features/messaging/CreateGroupDialog";
 import { NoMessagesEmpty } from "@/components/features/empty-states";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMessageVisibility } from "@/lib/hooks/useMessageVisibility";
 import { getDateLabel, isDifferentDay } from "@/lib/utils/timestamp";
@@ -40,6 +51,7 @@ function MessagesPageContent() {
   const [listKey, setListKey] = useState(0);
   const [showSkeleton, setShowSkeleton] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [showCreateGroupDialog, setShowCreateGroupDialog] = useState(false);
 
   // Fetch data
   const conversations = useQuery(api.conversations.getUserConversations);
@@ -187,6 +199,10 @@ function MessagesPageContent() {
     }
   }, [selectedMessages, deleteMessage]);
 
+  const handleGroupCreated = useCallback((newConversationId: string) => {
+    router.push(`/messages?conversationId=${newConversationId}`);
+  }, [router]);
+
   // Early return AFTER all hooks
   if (!isLoaded || !user) {
     return (
@@ -249,7 +265,7 @@ function MessagesPageContent() {
         <div className="flex flex-col lg:flex-row flex-1 overflow-hidden relative">
           {/* Desktop: Always show conversation list */}
           <div className="hidden lg:flex lg:flex-col lg:h-full lg:w-80 lg:border-r lg:border-gray-100 dark:lg:border-[#2d2d2d] lg:shrink-0">
-            <ConversationListHeader />
+            <ConversationListHeader onCreateGroup={() => setShowCreateGroupDialog(true)} />
             <div className="flex-1 overflow-y-auto">
               <ConversationList 
                 selectedConversationId={conversationId}
@@ -274,7 +290,7 @@ function MessagesPageContent() {
                 }}
                 className="flex flex-col h-full w-full absolute inset-0 lg:hidden"
               >
-                <ConversationListHeader />
+                <ConversationListHeader onCreateGroup={() => setShowCreateGroupDialog(true)} />
                 <div className="flex-1 overflow-y-auto pb-20">
                   {conversations === undefined ? (
                     <div className="flex flex-col">
@@ -312,10 +328,28 @@ function MessagesPageContent() {
                 className="flex flex-col h-full w-full lg:flex-1 lg:bg-gray-50 dark:lg:bg-[#1a1a1a] absolute inset-0 lg:relative bg-white dark:bg-[#1a1a1a]"
               >
             <ChatHeader
-              name={conversation?.otherUser?.name || "Loading..."}
-              profileImage={conversation?.otherUser?.profileImage}
-              status={conversation?.otherUser?.statusText || ""}
-              isOnline={conversation?.otherUser?.isOnline || false}
+              name={
+                conversation?.isGroup 
+                  ? (conversation.groupName || "Group")
+                  : ((conversation as any)?.otherUser?.name || "Loading...")
+              }
+              profileImage={
+                conversation?.isGroup 
+                  ? undefined 
+                  : ((conversation as any)?.otherUser?.profileImage)
+              }
+              status={
+                conversation?.isGroup 
+                  ? "" 
+                  : ((conversation as any)?.otherUser?.statusText || "")
+              }
+              isOnline={
+                conversation?.isGroup 
+                  ? false 
+                  : ((conversation as any)?.otherUser?.isOnline || false)
+              }
+              isGroup={conversation?.isGroup || false}
+              memberCount={(conversation as any)?.memberCount || 0}
               onBack={handleBackToList}
               onToggleSelectMode={handleToggleSelectMode}
               isSelectMode={isSelectMode}
@@ -349,7 +383,11 @@ function MessagesPageContent() {
                 null
               ) : messages.length === 0 ? (
                 <NoMessagesEmpty
-                  otherParticipantName={conversation?.otherUser?.name || "this user"}
+                  otherParticipantName={
+                    conversation?.isGroup 
+                      ? (conversation.groupName || "this group")
+                      : ((conversation as any)?.otherUser?.name || "this user")
+                  }
                 />
               ) : (
                 <div className="space-y-3 mt-auto">
@@ -459,6 +497,7 @@ function MessagesPageContent() {
                             reactions={message.reactions || []}
                             onReaction={handleReaction}
                             currentUserId={user.id}
+                            isGroup={conversation?.isGroup || false}
                           />
                         </div>
                       </div>
@@ -515,48 +554,34 @@ function MessagesPageContent() {
       {/* Bottom Navigation - Mobile Only - Hidden when in chat */}
       {!conversationId && <BottomNav />}
       
+      {/* Create Group Dialog */}
+      <CreateGroupDialog
+        isOpen={showCreateGroupDialog}
+        onClose={() => setShowCreateGroupDialog(false)}
+        onGroupCreated={handleGroupCreated}
+      />
+      
       {/* Bulk Delete Dialog */}
-      {showBulkDeleteDialog && (
-        <>
-          {/* Backdrop */}
-          <div
-            className="fixed inset-0 z-40 bg-black/10 backdrop-blur-[2px]"
-            onClick={() => setShowBulkDeleteDialog(false)}
-          />
-          
-          {/* Dialog */}
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0, y: 10 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.9, opacity: 0, y: 10 }}
-            transition={{
-              type: "spring",
-              stiffness: 400,
-              damping: 25,
-            }}
-            className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl shadow-2xl border border-gray-200 p-4 z-50 w-[280px] max-w-[90vw]"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <p className="text-sm text-gray-800 mb-4 font-medium">
-              Delete {selectedMessages.size} message{selectedMessages.size > 1 ? 's' : ''}?
-            </p>
-            <div className="flex gap-2">
-              <button
-                onClick={confirmBulkDelete}
-                className="flex-1 bg-red-500 text-white text-sm px-4 py-2.5 rounded-lg hover:bg-red-600 active:scale-95 transition-all font-medium shadow-sm"
-              >
-                Delete
-              </button>
-              <button
-                onClick={() => setShowBulkDeleteDialog(false)}
-                className="flex-1 bg-gray-100 text-gray-700 text-sm px-4 py-2.5 rounded-lg hover:bg-gray-200 active:scale-95 transition-all font-medium"
-              >
-                Cancel
-              </button>
-            </div>
-          </motion.div>
-        </>
-      )}
+      <AlertDialog open={showBulkDeleteDialog} onOpenChange={setShowBulkDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Messages</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete {selectedMessages.size} message{selectedMessages.size > 1 ? 's' : ''}? 
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmBulkDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
