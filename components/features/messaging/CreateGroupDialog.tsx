@@ -102,7 +102,10 @@ export function CreateGroupDialog({ isOpen, onClose, onGroupCreated }: CreateGro
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[380px] max-h-[70vh] flex flex-col p-0">
+      <DialogContent 
+        className="sm:max-w-[380px] max-h-[70vh] flex flex-col p-0"
+        onOpenAutoFocus={(e) => e.preventDefault()}
+      >
         {step === 1 ? (
           <>
             {/* Step 1: Select Members */}
@@ -125,7 +128,6 @@ export function CreateGroupDialog({ isOpen, onClose, onGroupCreated }: CreateGro
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search users..."
                   className="pl-9"
-                  autoFocus={false}
                 />
               </div>
 
