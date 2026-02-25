@@ -393,7 +393,7 @@ function MessagesPageContent() {
                             transition={{ duration: 0.25, ease: "easeOut" }}
                             className="flex items-center justify-center my-4"
                           >
-                            <div className="bg-gray-100 text-gray-600 text-xs font-medium px-3 py-1 rounded-full">
+                            <div className="bg-gray-100 dark:bg-[#2a2a2a] text-gray-600 dark:text-gray-300 text-xs font-medium px-3 py-1 rounded-full">
                               {getDateLabel(message.sentAt)}
                             </div>
                           </motion.div>

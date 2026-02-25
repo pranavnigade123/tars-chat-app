@@ -234,8 +234,8 @@ export function MessageInputRedesigned({ conversationId, onMessageSent }: Messag
       <div 
         onClick={handleWrapperClick}
         className={cn(
-          "flex items-center gap-3 rounded-3xl bg-white dark:bg-[#242424] border border-gray-200 dark:border-[#2d2d2d] px-4 py-2.5 lg:px-5 lg:py-3 transition-all duration-200 cursor-text shadow-sm relative",
-          isFocused && "ring-2 ring-blue-500 dark:ring-blue-400 border-blue-500 dark:border-blue-400 shadow-md"
+          "flex items-center gap-2.5 rounded-full bg-gray-50 dark:bg-[#1e1e1e] border border-gray-200 dark:border-[#2d2d2d] px-4 py-2 transition-all duration-200 cursor-text relative",
+          isFocused && "border-gray-300 dark:border-[#3d3d3d] bg-white dark:bg-[#242424]"
         )}
       >
         {/* Emoji Picker Popup */}
@@ -263,10 +263,10 @@ export function MessageInputRedesigned({ conversationId, onMessageSent }: Messag
             e.stopPropagation();
             setShowEmojiPicker(!showEmojiPicker);
           }}
-          className="text-gray-400 hover:text-gray-600 transition-colors shrink-0"
+          className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors shrink-0"
           aria-label="Add emoji"
         >
-          <Smile className="h-5 w-5 lg:h-6 lg:w-6" />
+          <Smile className="h-5 w-5" />
         </button>
 
         <textarea
@@ -282,7 +282,7 @@ export function MessageInputRedesigned({ conversationId, onMessageSent }: Messag
           placeholder="Message..."
           disabled={isSending}
           rows={1}
-          className="flex-1 resize-none bg-transparent text-gray-900 placeholder:text-gray-400 focus:outline-none disabled:cursor-not-allowed max-h-[120px] text-base lg:text-[15px] leading-relaxed"
+          className="flex-1 resize-none bg-transparent text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none disabled:cursor-not-allowed max-h-[120px] text-[15px] leading-relaxed"
         />
         
         <AnimatedButton
@@ -290,14 +290,14 @@ export function MessageInputRedesigned({ conversationId, onMessageSent }: Messag
           disabled={isSending || !content.trim()}
           scaleOnHover={!!(content.trim() && !isSending)}
           className={cn(
-            "flex h-9 w-9 lg:h-10 lg:w-10 items-center justify-center rounded-full transition-colors duration-200 shrink-0",
+            "flex h-9 w-9 items-center justify-center rounded-full transition-colors duration-200 shrink-0",
             content.trim() && !isSending
-              ? "bg-blue-600 text-white hover:bg-blue-700 shadow-sm"
-              : "bg-gray-200 text-gray-400 cursor-not-allowed"
+              ? "bg-gray-600 dark:bg-gray-600 text-white hover:bg-gray-700 dark:hover:bg-gray-700 shadow-md"
+              : "bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed"
           )}
           aria-label="Send message"
         >
-          <Send className="h-4 w-4 lg:h-[18px] lg:w-[18px]" />
+          <Send className="h-4 w-4" />
         </AnimatedButton>
       </div>
     </div>
