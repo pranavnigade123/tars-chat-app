@@ -9,7 +9,7 @@ import { filterUsers, sortUsers } from "@/lib/utils/userFilters";
 import { SearchBar } from "./SearchBar";
 import { UserListItem } from "./UserListItem";
 import { Skeleton } from "@/components/ui/skeleton";
-import { NoSearchResultsEmpty } from "@/components/features/empty-states";
+import { NoSearchResultsEmpty, NoUsersEmpty } from "@/components/features/empty-states";
 
 interface UserListProps {
   currentUserId: string;
@@ -88,8 +88,8 @@ export function UserList({ currentUserId }: UserListProps) {
 
   if (users.length === 0) {
     return (
-      <div className="flex h-full items-center justify-center p-4">
-        <p className="text-gray-600">No other users found</p>
+      <div className="flex h-full items-center justify-center">
+        <NoUsersEmpty />
       </div>
     );
   }
