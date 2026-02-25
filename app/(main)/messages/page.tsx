@@ -9,6 +9,7 @@ import { api } from "@/convex/_generated/api";
 import { ConversationListHeader } from "@/components/features/navigation/ConversationListHeader";
 import { ChatHeader } from "@/components/features/navigation/ChatHeader";
 import { BottomNav } from "@/components/features/navigation/BottomNav";
+import { ThemeToggle } from "@/components/features/navigation/ThemeToggle";
 import { ConversationList } from "@/components/features/messaging/ConversationList";
 import { MessageBubble } from "@/components/features/messaging/MessageBubble";
 import { MessageInputRedesigned } from "@/components/features/messaging/MessageInputRedesigned";
@@ -226,6 +227,10 @@ function MessagesPageContent() {
             <Users className="h-5 w-5" />
             <span className="text-[10px] font-medium">People</span>
           </Link>
+          
+          {/* Theme Toggle below Chats and People */}
+          <ThemeToggle />
+          
           <Link
             href="/profile"
             className={cn(

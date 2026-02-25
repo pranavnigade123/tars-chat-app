@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { UserButton } from "@clerk/nextjs";
 import { UserList } from "@/components/features/users/UserList";
 import { BottomNav } from "@/components/features/navigation/BottomNav";
+import { ThemeToggle } from "@/components/features/navigation/ThemeToggle";
 import Link from "next/link";
 import { MessageSquare, Users, User } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -55,6 +56,10 @@ export default function UsersPage() {
             <Users className="h-5 w-5" />
             <span className="text-[10px] font-medium">People</span>
           </Link>
+          
+          {/* Theme Toggle below Chats and People */}
+          <ThemeToggle />
+          
           <Link
             href="/profile"
             className={cn(
@@ -83,15 +88,21 @@ export default function UsersPage() {
         >
           {/* Header */}
           <header className="sticky top-0 z-10 bg-white dark:bg-[#1a1a1a] border-b border-gray-200 dark:border-[#2d2d2d]">
-            <div className="flex items-center justify-between px-4 py-3">
+            <div className="flex items-center justify-between px-4 py-3 h-[60px]">
               <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">People</h1>
-              <UserButton 
-                appearance={{
-                  elements: {
-                    avatarBox: "w-9 h-9"
-                  }
-                }}
-              />
+              <div className="flex items-center gap-2">
+                {/* Mobile: Show ThemeToggle */}
+                <div className="lg:hidden">
+                  <ThemeToggle />
+                </div>
+                <UserButton 
+                  appearance={{
+                    elements: {
+                      avatarBox: "w-9 h-9"
+                    }
+                  }}
+                />
+              </div>
             </div>
           </header>
           

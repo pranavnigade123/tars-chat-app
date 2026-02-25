@@ -9,7 +9,10 @@ export function ConversationListHeader() {
       <div className="flex items-center justify-between px-4 py-3 h-[60px]">
         <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Messages</h1>
         <div className="flex items-center gap-2">
-          <ThemeToggle />
+          {/* Mobile: Show ThemeToggle */}
+          <div className="lg:hidden">
+            <ThemeToggle />
+          </div>
           <UserButton 
             appearance={{
               elements: {

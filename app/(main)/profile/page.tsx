@@ -4,6 +4,8 @@ import { useUser } from "@clerk/nextjs";
 import { redirect, usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import { BottomNav } from "@/components/features/navigation/BottomNav";
+import { ThemeToggle } from "@/components/features/navigation/ThemeToggle";
+import { UserButton } from "@clerk/nextjs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/utils/getInitials";
 import { MessageSquare, Users, CheckCircle, Calendar } from "lucide-react";
@@ -55,6 +57,10 @@ export default function ProfilePage() {
             <Users className="h-5 w-5" />
             <span className="text-[10px] font-medium">People</span>
           </Link>
+          
+          {/* Theme Toggle below Chats and People */}
+          <ThemeToggle />
+          
           <Link
             href="/profile"
             className={cn(
@@ -83,8 +89,21 @@ export default function ProfilePage() {
         >
           {/* Header */}
           <header className="sticky top-0 z-10 bg-white dark:bg-[#1a1a1a] border-b border-gray-200 dark:border-[#2d2d2d]">
-            <div className="flex items-center justify-between px-4 py-3">
+            <div className="flex items-center justify-between px-4 py-3 h-[60px]">
               <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Profile</h1>
+              <div className="flex items-center gap-2">
+                {/* Mobile: Show ThemeToggle */}
+                <div className="lg:hidden">
+                  <ThemeToggle />
+                </div>
+                <UserButton 
+                  appearance={{
+                    elements: {
+                      avatarBox: "w-9 h-9"
+                    }
+                  }}
+                />
+              </div>
             </div>
           </header>
           
