@@ -351,3 +351,66 @@ export const createGroupConversation = mutation({
     return newConversationId;
   },
 });
+
+/**
+ * Get all members of a group conversation
+ * Returns member details with online status
+ */
+export const getGroupMembers = query({
+  args: {
+    conversationId: v.id("conversations"),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    const conversation = await ctx.db.get(args.conversationId);
+    if (!conversation) {
+      throw new Error("Conversation not found");
+    }
+
+    // Verify user is a participant
+    if (!conversation.participants.includes(identity.subject)) {
+      throw new Error("Not authorized to view this conversation");
+    }
+
+    // Verify it's a group conversation
+    if (!conversation.isGroup) {
+      throw new Error("Not a group conversation");
+    }
+
+    // Get all member details
+    const members = await Promise.all(
+      conversation.participants.map(async (clerkId) => {
+        const user = await ctx.db
+          .query("users")
+          .withIndex("by_clerk_id", (q) => q.eq("clerkId", clerkId))
+          .unique();
+
+        if (!user) {
+          return null;
+        }
+
+        // Compute online status from lastSeen
+        const ACTIVE_NOW_THRESHOLD = 2 * 60 * 1000; // 2 minutes
+        const now = Date.now();
+        const timeSinceLastSeen = now - user.lastSeen;
+        const isOnline = timeSinceLastSeen < ACTIVE_NOW_THRESHOLD;
+
+        return {
+          _id: user._id,
+          clerkId: user.clerkId,
+          name: user.name,
+          profileImage: user.profileImage,
+          isOnline: isOnline,
+          isCurrentUser: clerkId === identity.subject,
+        };
+      })
+    );
+
+    // Filter out null values and return
+    return members.filter((member) => member !== null);
+  },
+});

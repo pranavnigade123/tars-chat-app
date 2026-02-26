@@ -9,7 +9,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { getInitials } from "@/lib/utils/getInitials";
 import { cn } from "@/lib/utils";
@@ -132,7 +131,7 @@ export function CreateGroupDialog({ isOpen, onClose, onGroupCreated }: CreateGro
               </div>
 
               {/* User List */}
-              <ScrollArea className="h-[320px] pr-3">
+              <div className="h-[320px] overflow-y-auto pr-3 -mr-3">
                 <div className="space-y-1.5">
                   {filteredUsers.map((user) => (
                     <button
@@ -169,7 +168,7 @@ export function CreateGroupDialog({ isOpen, onClose, onGroupCreated }: CreateGro
                     </button>
                   ))}
                 </div>
-              </ScrollArea>
+              </div>
             </div>
 
             <DialogFooter className="px-5 py-3 border-t">

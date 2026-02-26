@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { ArrowLeft, CheckSquare, Trash2, X } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/utils/getInitials";
+import { cn } from "@/lib/utils";
 
 interface ChatHeaderProps {
   name: string;
@@ -17,6 +18,7 @@ interface ChatHeaderProps {
   isSelectMode?: boolean;
   selectedCount?: number;
   onBulkDelete?: () => void;
+  onGroupInfoClick?: () => void;
 }
 
 export function ChatHeader({ 
@@ -30,7 +32,8 @@ export function ChatHeader({
   onToggleSelectMode,
   isSelectMode = false,
   selectedCount = 0,
-  onBulkDelete
+  onBulkDelete,
+  onGroupInfoClick
 }: ChatHeaderProps) {
   return (
     <motion.header
@@ -63,7 +66,13 @@ export function ChatHeader({
           </div>
         )}
         
-        <div className="flex-1 min-w-0">
+        <div 
+          className={cn(
+            "flex-1 min-w-0",
+            isGroup && !isSelectMode && "cursor-pointer hover:opacity-80 transition-opacity"
+          )}
+          onClick={isGroup && !isSelectMode ? onGroupInfoClick : undefined}
+        >
           {isSelectMode ? (
             <h2 className="font-semibold text-gray-900 dark:text-gray-100">
               {selectedCount > 0 ? `${selectedCount} selected` : 'Select messages'}

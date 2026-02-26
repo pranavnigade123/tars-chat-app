@@ -15,6 +15,7 @@ import { MessageList } from "@/components/features/messaging/MessageList";
 import { MessageInputRedesigned } from "@/components/features/messaging/MessageInputRedesigned";
 import { TypingIndicator } from "@/components/features/messaging/TypingIndicator";
 import { CreateGroupDialog } from "@/components/features/messaging/CreateGroupDialog";
+import { GroupMembersDialog } from "@/components/features/messaging/GroupMembersDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -69,6 +70,7 @@ function MessagesPageContent() {
   const [showSkeleton, setShowSkeleton] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [showCreateGroupDialog, setShowCreateGroupDialog] = useState(false);
+  const [showGroupMembersDialog, setShowGroupMembersDialog] = useState(false);
 
   // Scroll container ref for manual scroll control
   const scrollContainerRef = useCallback((node: HTMLDivElement | null) => {
@@ -152,6 +154,10 @@ function MessagesPageContent() {
     },
     [toggleReaction]
   );
+
+  const handleGroupInfoClick = useCallback(() => {
+    setShowGroupMembersDialog(true);
+  }, []);
 
   // Early return AFTER all hooks
   if (!isLoaded || !user) {
@@ -304,6 +310,7 @@ function MessagesPageContent() {
                   isSelectMode={isSelectMode}
                   selectedCount={selectedMessages.size}
                   onBulkDelete={openBulkDeleteDialog}
+                  onGroupInfoClick={handleGroupInfoClick}
                 />
 
                 {/* Messages - with proper mobile padding for fixed input */}
@@ -384,6 +391,16 @@ function MessagesPageContent() {
         onClose={() => setShowCreateGroupDialog(false)}
         onGroupCreated={handleGroupCreated}
       />
+
+      {/* Group Members Dialog */}
+      {conversationId && conversation?.isGroup && (
+        <GroupMembersDialog
+          isOpen={showGroupMembersDialog}
+          onClose={() => setShowGroupMembersDialog(false)}
+          conversationId={conversationId}
+          groupName={conversation.groupName || "Group"}
+        />
+      )}
 
       {/* Bulk Delete Dialog */}
       <AlertDialog open={showBulkDeleteDialog} onOpenChange={closeBulkDeleteDialog}>
