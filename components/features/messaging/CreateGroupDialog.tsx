@@ -5,7 +5,7 @@ import { Users, Search, ArrowRight, ArrowLeft } from "lucide-react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -115,6 +115,9 @@ export function CreateGroupDialog({ isOpen, onClose, onGroupCreated }: CreateGro
                 </div>
                 <DialogTitle className="text-lg">Select Members</DialogTitle>
               </div>
+              <DialogDescription className="sr-only">
+                Select members to add to your group
+              </DialogDescription>
             </DialogHeader>
 
             <div className="flex-1 overflow-hidden px-5 space-y-3">
@@ -199,6 +202,9 @@ export function CreateGroupDialog({ isOpen, onClose, onGroupCreated }: CreateGro
                 </div>
                 <DialogTitle className="text-lg">Name Your Group</DialogTitle>
               </div>
+              <DialogDescription className="sr-only">
+                Enter a name for your group
+              </DialogDescription>
             </DialogHeader>
 
             <div className="flex-1 overflow-hidden px-5 space-y-4">

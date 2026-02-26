@@ -7,6 +7,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -41,6 +42,9 @@ export function GroupMembersDialog({
             <Users className="h-5 w-5 text-blue-600" />
             {groupName}
           </DialogTitle>
+          <DialogDescription className="sr-only">
+            View all members of this group
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-1">

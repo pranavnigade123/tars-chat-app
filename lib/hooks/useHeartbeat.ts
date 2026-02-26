@@ -3,14 +3,15 @@ import { useMutation } from "convex/react";
 import { useAuth } from "@clerk/nextjs";
 import { api } from "@/convex/_generated/api";
 
-// Constants
-const HEARTBEAT_INTERVAL = 30 * 1000; // 30 seconds
+// Constants - Optimized for fast presence updates
+const HEARTBEAT_INTERVAL = 10 * 1000; // 10 seconds (fast updates)
 const MAX_RETRIES = 3;
 const INITIAL_RETRY_DELAY = 1000; // 1 second
 
 /**
  * Hook to manage user presence heartbeat
  * Sends periodic heartbeats to keep user status as online
+ * Optimized for fast and consistent presence updates
  */
 export function useHeartbeat() {
   const { isSignedIn } = useAuth();
@@ -18,9 +19,10 @@ export function useHeartbeat() {
   const markOffline = useMutation(api.presence.markOffline);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isUnloadingRef = useRef(false);
 
   const sendHeartbeatWithRetry = async (retryCount = 0) => {
-    if (!isSignedIn) return;
+    if (!isSignedIn || isUnloadingRef.current) return;
 
     try {
       await sendHeartbeat();
@@ -47,7 +49,7 @@ export function useHeartbeat() {
       return;
     }
 
-    // Send initial heartbeat
+    // Send initial heartbeat immediately
     sendHeartbeatWithRetry();
 
     // Set up interval for periodic heartbeats
@@ -65,14 +67,24 @@ export function useHeartbeat() {
 
     // Mark offline when tab is closed or navigating away
     const handleBeforeUnload = () => {
+      isUnloadingRef.current = true;
       if (isSignedIn) {
-        // Use sendBeacon for reliable delivery during unload
+        // Synchronous call for better reliability
+        markOffline().catch(() => {});
+      }
+    };
+
+    // Additional cleanup on page hide (more reliable than beforeunload)
+    const handlePageHide = () => {
+      isUnloadingRef.current = true;
+      if (isSignedIn) {
         markOffline().catch(() => {});
       }
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
     window.addEventListener("beforeunload", handleBeforeUnload);
+    window.addEventListener("pagehide", handlePageHide);
 
     // Cleanup function
     return () => {
@@ -86,6 +98,7 @@ export function useHeartbeat() {
       }
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("beforeunload", handleBeforeUnload);
+      window.removeEventListener("pagehide", handlePageHide);
     };
   }, [isSignedIn, sendHeartbeat, markOffline]);
 }

@@ -1,12 +1,13 @@
 /**
  * Presence status utilities
  * Provides consistent computation of online status from lastSeen timestamp
+ * Optimized for fast and consistent presence updates
  */
 
-// Thresholds for presence status
-const ACTIVE_NOW_THRESHOLD = 2 * 60 * 1000; // 2 minutes
+// Thresholds for presence status - Optimized for fast updates
+const ACTIVE_NOW_THRESHOLD = 20 * 1000; // 20 seconds (fast online detection)
 const RECENTLY_ACTIVE_THRESHOLD = 5 * 60 * 1000; // 5 minutes
-export const OFFLINE_THRESHOLD = 60 * 1000; // 60 seconds (for heartbeat system)
+export const OFFLINE_THRESHOLD = 20 * 1000; // 20 seconds (matches ACTIVE_NOW_THRESHOLD)
 
 export interface PresenceStatus {
   isOnline: boolean;

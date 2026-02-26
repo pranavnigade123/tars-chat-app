@@ -102,13 +102,13 @@ export const getAllUsersExceptCurrentWithStatus = query({
       .filter((q) => q.neq(q.field("clerkId"), args.currentUserId))
       .collect();
     
-    // Add computed isOnline field
-    const OFFLINE_THRESHOLD = 60 * 1000; // 60 seconds
+    // Add computed isOnline field - Keep in sync with conversations.ts
+    const ACTIVE_NOW_THRESHOLD = 20 * 1000; // 20 seconds (fast updates)
     const now = Date.now();
     
     return users.map(user => ({
       ...user,
-      isOnline: now - user.lastSeen < OFFLINE_THRESHOLD,
+      isOnline: now - user.lastSeen < ACTIVE_NOW_THRESHOLD,
     }));
   },
 });
@@ -129,13 +129,13 @@ export const getAllUsers = query({
       .filter((q) => q.neq(q.field("clerkId"), identity.subject))
       .collect();
     
-    // Add computed isOnline field
-    const OFFLINE_THRESHOLD = 60 * 1000; // 60 seconds
+    // Add computed isOnline field - Keep in sync with conversations.ts
+    const ACTIVE_NOW_THRESHOLD = 20 * 1000; // 20 seconds (fast updates)
     const now = Date.now();
     
     return users.map(user => ({
       ...user,
-      isOnline: now - user.lastSeen < OFFLINE_THRESHOLD,
+      isOnline: now - user.lastSeen < ACTIVE_NOW_THRESHOLD,
     }));
   },
 });
