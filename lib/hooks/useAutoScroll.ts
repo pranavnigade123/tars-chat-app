@@ -19,6 +19,11 @@ interface UseAutoScrollReturn {
  * Custom hook for smart auto-scroll behavior in message feeds
  * Automatically scrolls to bottom when new messages arrive (if user is at bottom)
  * Shows "New Messages" button when scrolled up
+ * 
+ * Improved with deterministic scroll behavior:
+ * - Single scroll attempt on conversation change
+ * - Clean state management
+ * - No retry loops or multiple timeouts
  */
 export function useAutoScroll(
   messageCount: number,
@@ -30,6 +35,7 @@ export function useAutoScroll(
   const [isAtBottom, setIsAtBottom] = useState(true);
   const [showNewMessagesButton, setShowNewMessagesButton] = useState(false);
   const previousMessageCountRef = useRef(messageCount);
+  const previousConversationIdRef = useRef(conversationId);
 
   /**
    * Check if user is at the bottom of the scroll container
@@ -82,25 +88,34 @@ export function useAutoScroll(
 
   // Reset scroll state when conversation changes
   useEffect(() => {
-    setIsAtBottom(true);
-    setShowNewMessagesButton(false);
-    previousMessageCountRef.current = 0;
+    if (conversationId !== previousConversationIdRef.current) {
+      setIsAtBottom(true);
+      setShowNewMessagesButton(false);
+      previousMessageCountRef.current = 0;
+      previousConversationIdRef.current = conversationId;
+    }
   }, [conversationId]);
 
-  // Simple: scroll to bottom after messages load
+  // Deterministic scroll to bottom on conversation change
+  // Single attempt after render completes
   useEffect(() => {
-    if (messageCount > 0 && scrollContainerRef.current) {
-      // Wait a bit for render, then scroll once
-      const timer = setTimeout(() => {
-        if (scrollContainerRef.current) {
-          scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
-        }
-      }, 100);
-      return () => clearTimeout(timer);
-    }
+    if (!conversationId || messageCount === 0) return;
+
+    // Only scroll on initial load or conversation change
+    const isNewConversation = conversationId !== previousConversationIdRef.current;
+    if (!isNewConversation) return;
+
+    // Use requestAnimationFrame to ensure DOM is painted
+    const rafId = requestAnimationFrame(() => {
+      if (scrollContainerRef.current) {
+        scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+      }
+    });
+
+    return () => cancelAnimationFrame(rafId);
   }, [conversationId, messageCount]);
 
-  // Auto-scroll on new messages
+  // Auto-scroll on new messages (only if user is at bottom)
   useEffect(() => {
     if (!enabled || messageCount === 0) return;
 

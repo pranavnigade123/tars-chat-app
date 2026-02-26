@@ -5,6 +5,8 @@ const OFFLINE_THRESHOLD = 60 * 1000; // 60 seconds in milliseconds
 
 /**
  * Helper function to determine if a user is online based on lastSeen timestamp
+ * Note: This is used by the heartbeat system. For UI presence status,
+ * use computePresenceStatus from lib/utils/presenceStatus.ts
  */
 export function isUserOnline(lastSeen: number): boolean {
   return Date.now() - lastSeen < OFFLINE_THRESHOLD;

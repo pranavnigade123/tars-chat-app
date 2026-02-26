@@ -134,7 +134,9 @@ export const getConversationById = query({
       return null;
     }
 
-    // Compute online status with better thresholds
+    // Compute online status from lastSeen
+    // Note: This logic is duplicated here because Convex backend cannot import from lib/
+    // Keep in sync with lib/utils/presenceStatus.ts
     const ACTIVE_NOW_THRESHOLD = 2 * 60 * 1000; // 2 minutes
     const RECENTLY_ACTIVE_THRESHOLD = 5 * 60 * 1000; // 5 minutes
     const now = Date.now();
@@ -244,7 +246,9 @@ export const getUserConversations = query({
           .order("desc")
           .first();
 
-        // Compute online status based on lastSeen with better thresholds
+        // Compute online status from lastSeen
+        // Note: This logic is duplicated here because Convex backend cannot import from lib/
+        // Keep in sync with lib/utils/presenceStatus.ts
         const ACTIVE_NOW_THRESHOLD = 2 * 60 * 1000; // 2 minutes
         const RECENTLY_ACTIVE_THRESHOLD = 5 * 60 * 1000; // 5 minutes
         const now = Date.now();
