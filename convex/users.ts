@@ -112,3 +112,30 @@ export const getAllUsersExceptCurrentWithStatus = query({
     }));
   },
 });
+
+/**
+ * Get all users except current user (for group creation)
+ */
+export const getAllUsers = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return [];
+    }
+    
+    const users = await ctx.db
+      .query("users")
+      .filter((q) => q.neq(q.field("clerkId"), identity.subject))
+      .collect();
+    
+    // Add computed isOnline field
+    const OFFLINE_THRESHOLD = 60 * 1000; // 60 seconds
+    const now = Date.now();
+    
+    return users.map(user => ({
+      ...user,
+      isOnline: now - user.lastSeen < OFFLINE_THRESHOLD,
+    }));
+  },
+});

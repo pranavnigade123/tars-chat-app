@@ -20,6 +20,10 @@ export default defineSchema({
     participants: v.array(v.string()),
     createdAt: v.number(),
     lastMessageAt: v.optional(v.number()),
+    isGroup: v.optional(v.boolean()),
+    groupName: v.optional(v.string()),
+    groupImage: v.optional(v.string()),
+    createdBy: v.optional(v.string()), // Clerk ID of group creator
   })
     .index("by_conversation_id", ["conversationId"])
     .index("by_participants", ["participants"]),

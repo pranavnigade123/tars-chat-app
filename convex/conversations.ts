@@ -104,6 +104,17 @@ export const getConversationById = query({
       throw new Error("Not authorized to view this conversation");
     }
 
+    // Handle group conversations
+    if (conversation.isGroup) {
+      return {
+        ...conversation,
+        isGroup: true,
+        groupName: conversation.groupName,
+        memberCount: conversation.participants.length,
+      };
+    }
+
+    // Handle 1-on-1 conversations
     // Get the other participant
     const otherParticipantId = conversation.participants.find(
       (id) => id !== identity.subject
@@ -142,6 +153,7 @@ export const getConversationById = query({
 
     return {
       ...conversation,
+      isGroup: false,
       otherUser: {
         _id: otherUser._id,
         clerkId: otherUser.clerkId,
@@ -177,6 +189,33 @@ export const getUserConversations = query({
     // Enrich conversations with participant info and latest message
     const enrichedConversations = await Promise.all(
       conversations.map(async (conversation) => {
+        // Handle group conversations
+        if (conversation.isGroup) {
+          // Get latest message for this conversation
+          const latestMessage = await ctx.db
+            .query("messages")
+            .withIndex("by_conversation_and_time", (q) =>
+              q.eq("conversationId", conversation._id)
+            )
+            .order("desc")
+            .first();
+
+          return {
+            ...conversation,
+            isGroup: true,
+            groupName: conversation.groupName,
+            memberCount: conversation.participants.length,
+            latestMessage: latestMessage
+              ? {
+                  content: latestMessage.content,
+                  sentAt: latestMessage.sentAt,
+                  senderId: latestMessage.senderId,
+                }
+              : null,
+          };
+        }
+
+        // Handle 1-on-1 conversations
         // Get the other participant
         const otherParticipantId = conversation.participants.find(
           (id) => id !== identity.subject
@@ -224,6 +263,7 @@ export const getUserConversations = query({
 
         return {
           ...conversation,
+          isGroup: false,
           otherUser: {
             _id: otherUser._id,
             clerkId: otherUser.clerkId,
@@ -253,5 +293,57 @@ export const getUserConversations = query({
       const bTime = b.lastMessageAt || b.createdAt;
       return bTime - aTime;
     });
+  },
+});
+
+
+/**
+ * Create a group conversation
+ */
+export const createGroupConversation = mutation({
+  args: {
+    participantIds: v.array(v.string()),
+    groupName: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    // Validate participants array (minimum 2 participants + creator)
+    if (args.participantIds.length < 2) {
+      throw new Error("Group must have at least 2 other participants");
+    }
+
+    // Ensure creator is in participants
+    const allParticipants = Array.from(new Set([identity.subject, ...args.participantIds]));
+
+    // Validate all users exist
+    for (const userId of allParticipants) {
+      const user = await ctx.db
+        .query("users")
+        .withIndex("by_clerk_id", (q) => q.eq("clerkId", userId))
+        .unique();
+
+      if (!user) {
+        throw new Error(`User ${userId} not found`);
+      }
+    }
+
+    // Generate unique conversation ID for group
+    const conversationId = `group_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+    // Create new group conversation
+    const newConversationId = await ctx.db.insert("conversations", {
+      conversationId,
+      participants: allParticipants,
+      createdAt: Date.now(),
+      isGroup: true,
+      groupName: args.groupName,
+      createdBy: identity.subject,
+    });
+
+    return newConversationId;
   },
 });

@@ -30,11 +30,11 @@ export function EmptyState({
       role="status"
       aria-label={title}
     >
-      <div className="mb-4 text-gray-400" aria-hidden="true">
+      <div className="mb-4 text-gray-400 dark:text-gray-500" aria-hidden="true">
         {icon}
       </div>
-      <h3 className="mb-2 text-xl font-semibold text-gray-900">{title}</h3>
-      <p className="mb-6 max-w-sm text-sm text-gray-600">{message}</p>
+      <h3 className="mb-2 text-xl font-semibold text-gray-900 dark:text-gray-100">{title}</h3>
+      <p className="mb-6 max-w-sm text-sm text-gray-600 dark:text-gray-400">{message}</p>
       {action && (
         <button
           onClick={action.onClick}

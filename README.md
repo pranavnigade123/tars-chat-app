@@ -83,23 +83,49 @@ Tars Chat is a full-featured real-time messaging platform where users can sign u
 - Shows "New Messages" button instead of forcing scroll
 - Smooth scroll animations
 
-### Optional Features (11-14) - Partially Implemented
+### Optional Features (11-15) - Implemented ✅
 
-#### 11. Delete Own Messages ⚠️
-- Backend soft delete implemented
-- UI for deletion not yet implemented
+#### 11. Delete Own Messages ✅
+- Long-press (mobile) or right-click (desktop) to open context menu
+- Delete option for own messages
+- Soft delete with "This message was deleted" placeholder
+- Bulk delete mode with multi-select
+- Confirmation dialog before deletion
 
-#### 12. Message Reactions ❌
-- Not implemented (future feature)
+#### 12. Message Reactions ✅
+- Quick reactions via context menu (👍 ❤️ 😂 😮 😢)
+- Toggle reactions on/off
+- Reaction count display
+- Visual indication of user's own reactions
+- Dark theme support
 
 #### 13. Loading & Error States ✅
 - Skeleton loaders throughout the app
 - Error messages with retry options
 - Graceful error handling
 - Network failure recovery
+- Delayed skeleton display (400ms) for better UX
 
-#### 14. Group Chat ❌
-- Not implemented (future feature)
+#### 14. Group Chat ✅
+- Create groups with multiple users (minimum 2)
+- 2-step creation flow (select members → name group)
+- Group name and member count display
+- Sender avatars and names in group messages (WhatsApp-style)
+- Blue gradient avatars for groups
+- Search and filter users when creating groups
+
+#### 15. Dark Mode ✅
+- Full dark theme implementation
+- Theme toggle in navigation (desktop sidebar, mobile headers)
+- Persistent theme preference (localStorage)
+- Consistent color palette:
+  - Main backgrounds: `#1a1a1a`
+  - Headers/navigation: `#1e1e1e`
+  - Cards/modals: `#242424`
+  - Message bubbles: `#2a2a2a`
+  - Borders: `#2d2d2d`
+- Smooth transitions between themes
+- Dark theme for Clerk auth pages
 
 ---
 
@@ -109,7 +135,11 @@ Tars Chat is a full-featured real-time messaging platform where users can sign u
 - **Next.js 15+** - App Router with React Server Components
 - **TypeScript** - Full type safety throughout
 - **Tailwind CSS** - Utility-first styling
-- **shadcn/ui** - Component library (Avatar, Skeleton)
+- **shadcn/ui** - Modern component library
+  - Dialog, AlertDialog, Button, Input, Badge
+  - Label, ScrollArea, Avatar, Skeleton
+- **Framer Motion** - Smooth animations and transitions
+- **Lucide React** - Icon library
 
 ### Backend & Database
 - **Convex** - Real-time backend and database
@@ -203,8 +233,12 @@ For production, configure a webhook in Clerk dashboard:
 2. **Browse Users** - See all registered users in the "People" tab
 3. **Search** - Use the search bar to find specific users
 4. **Start Chatting** - Click on any user to open a conversation
-5. **Send Messages** - Type and send messages in real-time
-6. **Stay Updated** - See online status, typing indicators, and unread counts
+5. **Create Groups** - Click the group icon to create a group chat with multiple users
+6. **Send Messages** - Type and send messages in real-time
+7. **React to Messages** - Long-press (mobile) or right-click (desktop) to add reactions
+8. **Delete Messages** - Use context menu to delete your own messages
+9. **Toggle Theme** - Switch between light and dark mode
+10. **Stay Updated** - See online status, typing indicators, and unread counts
 
 ---
 
@@ -218,14 +252,16 @@ For production, configure a webhook in Clerk dashboard:
 - Last seen timestamps
 
 **conversations**
-- One-on-one conversation records
+- One-on-one and group conversation records
 - Participant tracking
 - Deterministic conversation IDs
+- Group metadata (name, member count, creator)
 
 **messages**
 - Message content and metadata
-- Read receipts tracking
-- Soft delete support
+- Read receipts tracking (readBy array)
+- Soft delete support (isDeleted flag)
+- Reaction support (emoji + userId)
 
 **typingStates**
 - Real-time typing indicators
@@ -276,12 +312,13 @@ For production, configure a webhook in Clerk dashboard:
 | 8. Typing Indicator | ✅ Complete | With auto-clear |
 | 9. Unread Count | ✅ Complete | Real-time badges |
 | 10. Smart Auto-Scroll | ✅ Complete | With new message button |
-| 11. Delete Messages | ⚠️ Partial | Backend only |
-| 12. Message Reactions | ❌ Not implemented | Future feature |
+| 11. Delete Messages | ✅ Complete | Context menu + bulk delete |
+| 12. Message Reactions | ✅ Complete | 5 emoji reactions |
 | 13. Loading & Error States | ✅ Complete | Throughout app |
-| 14. Group Chat | ❌ Not implemented | Future feature |
+| 14. Group Chat | ✅ Complete | Multi-user groups with names |
+| 15. Dark Mode | ✅ Complete | Full theme support |
 
-**Completion Rate: 10/10 core features + 1.5/4 optional = 92.5%**
+**Completion Rate: 10/10 core features + 5/5 optional = 100%**
 
 ---
 
@@ -301,44 +338,17 @@ For production, configure a webhook in Clerk dashboard:
 
 ### Key Technical Decisions
 
-**Why Convex?**
-- Built-in real-time subscriptions
-- No need for WebSocket setup
-- Automatic schema management
-- Serverless functions
-
-**Why Clerk?**
-- Easy social login integration
-- Webhook support for user sync
-- Pre-built UI components
-- Secure session management
-
-**Why Next.js App Router?**
-- Server components for better performance
-- Built-in routing
-- API routes for webhooks
-- Excellent TypeScript support
-
----
-
-## 🚧 Known Limitations & Future Improvements
-
-### Current Limitations
-- No group chat functionality
-- No message editing
-- No file/image attachments
-- No message reactions
-- No push notifications
-
-### Planned Improvements
-1. Implement group chat
-2. Add message reactions
-3. Enable message editing
-4. Support file uploads
-5. Add push notifications
-6. Implement message search
-7. Add dark mode
-8. Voice/video calling
+### Potential Enhancements
+- Message editing functionality
+- File/image attachments
+- Push notifications
+- Message search
+- Voice/video calling
+- Read receipts for group chats
+- Group admin controls
+- User blocking/reporting
+- Message forwarding
+- Link previews
 
 ---
 
@@ -364,5 +374,3 @@ If you have any questions about the implementation or want to discuss any techni
 - Contact me through GitHub
 
 ---
-
-*Demonstrating real-time web development skills with modern technologies.*

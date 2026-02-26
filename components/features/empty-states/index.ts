@@ -7,3 +7,4 @@ export { EmptyState } from "./EmptyState";
 export { NoConversationsEmpty } from "./NoConversationsEmpty";
 export { NoMessagesEmpty } from "./NoMessagesEmpty";
 export { NoSearchResultsEmpty } from "./NoSearchResultsEmpty";
+export { NoUsersEmpty } from "./NoUsersEmpty";
