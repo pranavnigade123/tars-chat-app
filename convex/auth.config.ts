@@ -1,7 +1,7 @@
 export default {
   providers: [
     {
-      domain: "https://clerk.tars.pranavnigade.me",
+      domain: "https://modest-collie-28.clerk.accounts.dev",
       applicationID: "convex",
     },
   ],
