@@ -1,7 +1,7 @@
 import { mutation } from "./_generated/server";
 
-// Constants for presence system - Optimized for fast updates
-const OFFLINE_THRESHOLD = 20 * 1000; // 20 seconds (fast offline detection)
+// Constants for presence system - Optimized for very fast updates
+const OFFLINE_THRESHOLD = 10 * 1000; // 10 seconds (very fast offline detection)
 
 /**
  * Helper function to determine if a user is online based on lastSeen timestamp

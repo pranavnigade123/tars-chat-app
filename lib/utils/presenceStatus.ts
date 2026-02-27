@@ -4,10 +4,10 @@
  * Optimized for fast and consistent presence updates
  */
 
-// Thresholds for presence status - Optimized for fast updates
-const ACTIVE_NOW_THRESHOLD = 20 * 1000; // 20 seconds (fast online detection)
+// Thresholds for presence status - Optimized for very fast updates
+const ACTIVE_NOW_THRESHOLD = 10 * 1000; // 10 seconds (very fast offline detection)
 const RECENTLY_ACTIVE_THRESHOLD = 5 * 60 * 1000; // 5 minutes
-export const OFFLINE_THRESHOLD = 20 * 1000; // 20 seconds (matches ACTIVE_NOW_THRESHOLD)
+export const OFFLINE_THRESHOLD = 10 * 1000; // 10 seconds (matches ACTIVE_NOW_THRESHOLD)
 
 export interface PresenceStatus {
   isOnline: boolean;

@@ -3,8 +3,8 @@ import { useMutation } from "convex/react";
 import { useAuth } from "@clerk/nextjs";
 import { api } from "@/convex/_generated/api";
 
-// Constants - Optimized for fast presence updates
-const HEARTBEAT_INTERVAL = 10 * 1000; // 10 seconds (fast updates)
+// Constants - Optimized for very fast presence updates
+const HEARTBEAT_INTERVAL = 5 * 1000; // 5 seconds (very fast updates)
 const MAX_RETRIES = 3;
 const INITIAL_RETRY_DELAY = 1000; // 1 second
 
@@ -57,10 +57,15 @@ export function useHeartbeat() {
       sendHeartbeatWithRetry();
     }, HEARTBEAT_INTERVAL);
 
-    // Page Visibility API support
+    // Page Visibility API support — mark offline when tab hidden, online when visible
     const handleVisibilityChange = () => {
-      if (!document.hidden && isSignedIn) {
-        // Tab became visible, send immediate heartbeat
+      if (!isSignedIn) return;
+      if (document.hidden) {
+        // Tab hidden — mark offline immediately for fast detection
+        markOffline().catch(() => {});
+      } else {
+        // Tab visible again — send immediate heartbeat to come back online
+        isUnloadingRef.current = false;
         sendHeartbeatWithRetry();
       }
     };
@@ -69,12 +74,11 @@ export function useHeartbeat() {
     const handleBeforeUnload = () => {
       isUnloadingRef.current = true;
       if (isSignedIn) {
-        // Synchronous call for better reliability
         markOffline().catch(() => {});
       }
     };
 
-    // Additional cleanup on page hide (more reliable than beforeunload)
+    // Additional cleanup on page hide (more reliable than beforeunload on mobile)
     const handlePageHide = () => {
       isUnloadingRef.current = true;
       if (isSignedIn) {

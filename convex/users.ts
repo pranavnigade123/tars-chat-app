@@ -103,7 +103,7 @@ export const getAllUsersExceptCurrentWithStatus = query({
       .collect();
     
     // Add computed isOnline field - Keep in sync with conversations.ts
-    const ACTIVE_NOW_THRESHOLD = 20 * 1000; // 20 seconds (fast updates)
+    const ACTIVE_NOW_THRESHOLD = 10 * 1000; // 10 seconds (very fast offline detection)
     const now = Date.now();
     
     return users.map(user => ({
@@ -130,7 +130,7 @@ export const getAllUsers = query({
       .collect();
     
     // Add computed isOnline field - Keep in sync with conversations.ts
-    const ACTIVE_NOW_THRESHOLD = 20 * 1000; // 20 seconds (fast updates)
+    const ACTIVE_NOW_THRESHOLD = 10 * 1000; // 10 seconds (very fast offline detection)
     const now = Date.now();
     
     return users.map(user => ({

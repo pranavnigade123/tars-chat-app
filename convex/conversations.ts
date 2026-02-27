@@ -137,7 +137,7 @@ export const getConversationById = query({
     // Compute online status from lastSeen
     // Note: This logic is duplicated here because Convex backend cannot import from lib/
     // Keep in sync with lib/utils/presenceStatus.ts
-    const ACTIVE_NOW_THRESHOLD = 20 * 1000; // 20 seconds (fast updates)
+    const ACTIVE_NOW_THRESHOLD = 10 * 1000; // 10 seconds (very fast offline detection)
     const RECENTLY_ACTIVE_THRESHOLD = 5 * 60 * 1000; // 5 minutes
     const now = Date.now();
     const timeSinceLastSeen = now - otherUser.lastSeen;
@@ -249,7 +249,7 @@ export const getUserConversations = query({
         // Compute online status from lastSeen
         // Note: This logic is duplicated here because Convex backend cannot import from lib/
         // Keep in sync with lib/utils/presenceStatus.ts
-        const ACTIVE_NOW_THRESHOLD = 20 * 1000; // 20 seconds (fast updates)
+        const ACTIVE_NOW_THRESHOLD = 10 * 1000; // 10 seconds (very fast offline detection)
         const RECENTLY_ACTIVE_THRESHOLD = 5 * 60 * 1000; // 5 minutes
         const now = Date.now();
         const timeSinceLastSeen = now - otherUser.lastSeen;
@@ -394,7 +394,7 @@ export const getGroupMembers = query({
         }
 
         // Compute online status from lastSeen
-        const ACTIVE_NOW_THRESHOLD = 20 * 1000; // 20 seconds (fast updates)
+        const ACTIVE_NOW_THRESHOLD = 10 * 1000; // 10 seconds (very fast offline detection)
         const now = Date.now();
         const timeSinceLastSeen = now - user.lastSeen;
         const isOnline = timeSinceLastSeen < ACTIVE_NOW_THRESHOLD;
