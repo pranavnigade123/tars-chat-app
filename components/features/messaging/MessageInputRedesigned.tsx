@@ -134,8 +134,8 @@ export function MessageInputRedesigned({ conversationId, onMessageSent }: Messag
     return () => clearTimeout(timeoutId);
   }, [content, conversationId]);
 
-  const handleSend = async () => {
-    const trimmedContent = content.trim();
+  const handleSend = async (overrideContent?: string) => {
+    const trimmedContent = (overrideContent ?? content).trim();
     
     if (!trimmedContent) return;
 
@@ -179,10 +179,10 @@ export function MessageInputRedesigned({ conversationId, onMessageSent }: Messag
 
   const handleRetry = () => {
     if (failedMessage) {
-      setContent(failedMessage);
+      const messageToRetry = failedMessage;
       setFailedMessage(null);
       setError(null);
-      setTimeout(() => handleSend(), 100);
+      handleSend(messageToRetry);
     }
   };
 
@@ -286,7 +286,7 @@ export function MessageInputRedesigned({ conversationId, onMessageSent }: Messag
         />
         
         <AnimatedButton
-          onClick={handleSend}
+          onClick={() => handleSend()}
           disabled={isSending || !content.trim()}
           scaleOnHover={!!(content.trim() && !isSending)}
           className={cn(

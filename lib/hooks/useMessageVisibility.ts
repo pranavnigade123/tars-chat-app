@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import type { Id } from "@/convex/_generated/dataModel";
 
 interface UseMessageVisibilityOptions {
@@ -11,7 +11,13 @@ export function useMessageVisibility({
   threshold = 0.5,
 }: UseMessageVisibilityOptions) {
   const observerRef = useRef<IntersectionObserver | null>(null);
-  const [visibleMessages, setVisibleMessages] = useState<Set<string>>(new Set());
+  const visibleMessagesRef = useRef<Set<string>>(new Set());
+  const onMessageVisibleRef = useRef(onMessageVisible);
+
+  // Keep callback ref in sync without re-creating observer
+  useEffect(() => {
+    onMessageVisibleRef.current = onMessageVisible;
+  }, [onMessageVisible]);
 
   useEffect(() => {
     observerRef.current = new IntersectionObserver(
@@ -19,9 +25,9 @@ export function useMessageVisibility({
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             const messageId = entry.target.getAttribute("data-message-id");
-            if (messageId && !visibleMessages.has(messageId)) {
-              setVisibleMessages((prev) => new Set(prev).add(messageId));
-              onMessageVisible(messageId as Id<"messages">);
+            if (messageId && !visibleMessagesRef.current.has(messageId)) {
+              visibleMessagesRef.current.add(messageId);
+              onMessageVisibleRef.current(messageId as Id<"messages">);
             }
           }
         });
@@ -32,13 +38,13 @@ export function useMessageVisibility({
     return () => {
       observerRef.current?.disconnect();
     };
-  }, [onMessageVisible, threshold, visibleMessages]);
+  }, [threshold]);
 
-  const observeMessage = (element: HTMLElement | null) => {
+  const observeMessage = useCallback((element: HTMLElement | null) => {
     if (element && observerRef.current) {
       observerRef.current.observe(element);
     }
-  };
+  }, []);
 
   return { observeMessage };
 }

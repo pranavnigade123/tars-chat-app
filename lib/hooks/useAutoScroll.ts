@@ -86,24 +86,22 @@ export function useAutoScroll(
     }
   }, [checkIsAtBottom, enabled]);
 
-  // Reset scroll state when conversation changes
+  // Reset scroll state AND scroll to bottom when conversation changes
+  // Combined into a single effect to avoid ref-update ordering issues
   useEffect(() => {
-    if (conversationId !== previousConversationIdRef.current) {
-      setIsAtBottom(true);
-      setShowNewMessagesButton(false);
-      previousMessageCountRef.current = 0;
-      previousConversationIdRef.current = conversationId;
-    }
-  }, [conversationId]);
-
-  // Deterministic scroll to bottom on conversation change
-  // Single attempt after render completes
-  useEffect(() => {
-    if (!conversationId || messageCount === 0) return;
-
-    // Only scroll on initial load or conversation change
     const isNewConversation = conversationId !== previousConversationIdRef.current;
     if (!isNewConversation) return;
+
+    // Reset state
+    setIsAtBottom(true);
+    setShowNewMessagesButton(false);
+    previousMessageCountRef.current = 0;
+
+    // Update ref AFTER the check so future renders know it's no longer new
+    previousConversationIdRef.current = conversationId;
+
+    // Scroll to bottom if there are messages
+    if (!conversationId || messageCount === 0) return;
 
     // Use requestAnimationFrame to ensure DOM is painted
     const rafId = requestAnimationFrame(() => {
