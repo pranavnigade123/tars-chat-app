@@ -167,6 +167,60 @@ export const getTypingState = query({
 });
 
 /**
+ * Get typing status for multiple conversations in one query
+ * Returns array of { conversationId, isTyping }
+ */
+export const getTypingStatesForConversations = query({
+  args: {
+    conversationIds: v.array(v.id("conversations")),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return [] as Array<{ conversationId: string; isTyping: boolean }>;
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!user) {
+      return [] as Array<{ conversationId: string; isTyping: boolean }>;
+    }
+
+    const uniqueConversationIds = Array.from(new Set(args.conversationIds));
+    const now = Date.now();
+    const results: Array<{ conversationId: string; isTyping: boolean }> = [];
+
+    for (const conversationId of uniqueConversationIds) {
+      const conversation = await ctx.db.get(conversationId);
+      if (!conversation || !conversation.participants.includes(identity.subject)) {
+        continue;
+      }
+
+      const typingStates = await ctx.db
+        .query("typingStates")
+        .withIndex("by_conversation_and_user", (q) =>
+          q.eq("conversationId", conversationId)
+        )
+        .collect();
+
+      const isTyping = typingStates.some(
+        (state) => state.userId !== user._id && now - state.lastTypingAt < TYPING_TIMEOUT
+      );
+
+      results.push({
+        conversationId: conversationId as string,
+        isTyping,
+      });
+    }
+
+    return results;
+  },
+});
+
+/**
  * Cleanup expired typing states (run via cron)
  * Deletes typing states older than 5 minutes
  */

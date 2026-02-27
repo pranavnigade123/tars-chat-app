@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { useQuery } from "convex/react";
 import { useRouter } from "next/navigation";
 import { api } from "@/convex/_generated/api";
@@ -13,7 +14,6 @@ import { Plus } from "lucide-react";
 import Link from "next/link";
 import type { Id } from "@/convex/_generated/dataModel";
 import { NoConversationsEmpty } from "@/components/features/empty-states";
-import { TypingIndicator } from "./TypingIndicator";
 
 interface ConversationSidebarProps {
   selectedConversationId: Id<"conversations"> | null;
@@ -37,19 +37,12 @@ interface ConversationItemProps {
     } | null;
   };
   isSelected: boolean;
+  isTyping: boolean;
+  unreadCount: number;
 }
 
-function ConversationItem({ conversation, isSelected }: ConversationItemProps) {
+function ConversationItem({ conversation, isSelected, isTyping, unreadCount }: ConversationItemProps) {
   const router = useRouter();
-  const typingUsers = useQuery(api.typingStates.getTypingState, {
-    conversationId: conversation._id,
-  });
-  
-  const unreadCount = useQuery(api.messages.getUnreadCount, {
-    conversationId: conversation._id,
-  });
-
-  const isTyping = typingUsers && typingUsers.length > 0;
   const isOnline = conversation.otherUser?.isOnline || false;
   const hasUnread = typeof unreadCount === 'number' && unreadCount > 0;
   const isGroup = conversation.isGroup || false;
@@ -138,9 +131,7 @@ function ConversationItem({ conversation, isSelected }: ConversationItemProps) {
             )}
             {/* Show typing indicator below message preview */}
             {isTyping && (
-              <div className="mt-0.5">
-                <TypingIndicator conversationId={conversation._id} variant="compact" />
-              </div>
+              <p className="mt-0.5 text-sm text-blue-600 dark:text-blue-400 italic">typing...</p>
             )}
           </div>
           
@@ -160,6 +151,39 @@ export function ConversationSidebar({
   selectedConversationId,
 }: ConversationSidebarProps) {
   const conversations = useQuery(api.conversations.getUserConversations);
+
+  const conversationIds = useMemo(
+    () => (conversations ? conversations.map((conversation) => conversation._id) : []),
+    [conversations]
+  );
+
+  const unreadCounts = useQuery(
+    api.messages.getUnreadCounts,
+    conversations ? { conversationIds } : "skip"
+  );
+
+  const typingStates = useQuery(
+    api.typingStates.getTypingStatesForConversations,
+    conversations ? { conversationIds } : "skip"
+  );
+
+  const unreadCountMap = useMemo(() => {
+    const map = new Map<string, number>();
+    if (!unreadCounts) return map;
+    unreadCounts.forEach((item) => {
+      map.set(item.conversationId, item.unreadCount);
+    });
+    return map;
+  }, [unreadCounts]);
+
+  const typingStateMap = useMemo(() => {
+    const map = new Map<string, boolean>();
+    if (!typingStates) return map;
+    typingStates.forEach((item) => {
+      map.set(item.conversationId, item.isTyping);
+    });
+    return map;
+  }, [typingStates]);
 
   if (conversations === undefined) {
     return (
@@ -241,6 +265,8 @@ export function ConversationSidebar({
             key={conversation._id}
             conversation={conversation}
             isSelected={selectedConversationId === conversation._id}
+            isTyping={typingStateMap.get(conversation._id as string) ?? false}
+            unreadCount={unreadCountMap.get(conversation._id as string) ?? 0}
           />
         ))}
       </div>

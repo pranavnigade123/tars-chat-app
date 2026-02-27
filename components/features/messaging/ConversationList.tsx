@@ -44,19 +44,12 @@ interface ConversationItemProps {
   };
   isSelected: boolean;
   index: number;
+  isTyping: boolean;
+  unreadCount: number;
 }
 
-function ConversationItem({ conversation, isSelected, index }: ConversationItemProps) {
+function ConversationItem({ conversation, isSelected, index, isTyping, unreadCount }: ConversationItemProps) {
   const router = useRouter();
-  const typingUsers = useQuery(api.typingStates.getTypingState, {
-    conversationId: conversation._id,
-  });
-  
-  const unreadCount = useQuery(api.messages.getUnreadCount, {
-    conversationId: conversation._id,
-  });
-
-  const isTyping = typingUsers && typingUsers.length > 0;
   const isOnline = conversation.otherUser?.isOnline || false;
   const hasUnread = typeof unreadCount === 'number' && unreadCount > 0;
   const isGroup = conversation.isGroup || false;
@@ -166,6 +159,39 @@ export function ConversationList({ selectedConversationId, searchQuery = "", onS
   const conversations = useQuery(api.conversations.getUserConversations);
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
+  const conversationIds = useMemo(
+    () => (conversations ? conversations.map((conversation) => conversation._id) : []),
+    [conversations]
+  );
+
+  const unreadCounts = useQuery(
+    api.messages.getUnreadCounts,
+    conversations ? { conversationIds } : "skip"
+  );
+
+  const typingStates = useQuery(
+    api.typingStates.getTypingStatesForConversations,
+    conversations ? { conversationIds } : "skip"
+  );
+
+  const unreadCountMap = useMemo(() => {
+    const map = new Map<string, number>();
+    if (!unreadCounts) return map;
+    unreadCounts.forEach((item) => {
+      map.set(item.conversationId, item.unreadCount);
+    });
+    return map;
+  }, [unreadCounts]);
+
+  const typingStateMap = useMemo(() => {
+    const map = new Map<string, boolean>();
+    if (!typingStates) return map;
+    typingStates.forEach((item) => {
+      map.set(item.conversationId, item.isTyping);
+    });
+    return map;
+  }, [typingStates]);
+
   // Filter conversations by user name or message content
   const filteredConversations = useMemo(() => {
     if (!conversations || !debouncedSearchQuery.trim()) return conversations;
@@ -273,6 +299,8 @@ export function ConversationList({ selectedConversationId, searchQuery = "", onS
             conversation={conversation}
             isSelected={selectedConversationId === conversation._id}
             index={index}
+            isTyping={typingStateMap.get(conversation._id as string) ?? false}
+            unreadCount={unreadCountMap.get(conversation._id as string) ?? 0}
           />
         ))}
       </div>

@@ -271,6 +271,59 @@ export const getUnreadCount = query({
 });
 
 /**
+ * Get unread counts for multiple conversations in one query
+ * Returns array of { conversationId, unreadCount }
+ */
+export const getUnreadCounts = query({
+  args: {
+    conversationIds: v.array(v.id("conversations")),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return [] as Array<{ conversationId: string; unreadCount: number }>;
+    }
+
+    const uniqueConversationIds = Array.from(new Set(args.conversationIds));
+    const results: Array<{ conversationId: string; unreadCount: number }> = [];
+
+    for (const conversationId of uniqueConversationIds) {
+      const conversation = await ctx.db.get(conversationId);
+      if (!conversation || !conversation.participants.includes(identity.subject)) {
+        continue;
+      }
+
+      const messages = await ctx.db
+        .query("messages")
+        .withIndex("by_conversation_and_time", (q) =>
+          q.eq("conversationId", conversationId)
+        )
+        .filter((q) => q.eq(q.field("isDeleted"), false))
+        .collect();
+
+      let unreadCount = 0;
+      for (const message of messages) {
+        if (message.senderId === identity.subject) {
+          continue;
+        }
+
+        const readBy = message.readBy || [];
+        if (!readBy.includes(identity.subject)) {
+          unreadCount++;
+        }
+      }
+
+      results.push({
+        conversationId: conversationId as string,
+        unreadCount,
+      });
+    }
+
+    return results;
+  },
+});
+
+/**
  * Soft delete a message (only the sender can delete their own messages)
  */
 export const deleteMessage = mutation({
