@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { useHeartbeat } from "@/lib/hooks/useHeartbeat";
+import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
 
 interface HeartbeatProviderProps {
   children: React.ReactNode;
@@ -12,13 +13,10 @@ export function HeartbeatProvider({ children }: HeartbeatProviderProps) {
   const { isSignedIn } = useAuth();
   useHeartbeat();
   
-  // Note: syncUser is handled by useCurrentUser hook (conditional on user missing in Convex).
-  // Removed duplicate unconditional sync that fired on every page load.
-  
-  // Clear all drafts on logout
+  useCurrentUser();
+
   useEffect(() => {
     if (!isSignedIn) {
-      // User logged out, clear all draft messages
       const keysToRemove: string[] = [];
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);

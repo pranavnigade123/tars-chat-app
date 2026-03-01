@@ -12,13 +12,11 @@ export const setTypingState = mutation({
     conversationId: v.id("conversations"),
   },
   handler: async (ctx, args) => {
-    // Get authenticated user
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
       throw new Error("Not authenticated");
     }
 
-    // Get user record
     const user = await ctx.db
       .query("users")
       .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
@@ -28,7 +26,6 @@ export const setTypingState = mutation({
       throw new Error("User not found");
     }
 
-    // Validate conversation exists and user is a member
     const conversation = await ctx.db.get(args.conversationId);
     if (!conversation) {
       throw new Error("Conversation not found");
@@ -38,7 +35,6 @@ export const setTypingState = mutation({
       throw new Error("Not authorized: user is not a member of this conversation");
     }
 
-    // Find existing typing state
     const existingState = await ctx.db
       .query("typingStates")
       .withIndex("by_conversation_and_user", (q) =>
@@ -46,7 +42,6 @@ export const setTypingState = mutation({
       )
       .unique();
 
-    // Upsert typing state
     if (existingState) {
       await ctx.db.patch(existingState._id, {
         lastTypingAt: Date.now(),
@@ -71,13 +66,11 @@ export const clearTypingState = mutation({
     conversationId: v.id("conversations"),
   },
   handler: async (ctx, args) => {
-    // Get authenticated user
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
       throw new Error("Not authenticated");
     }
 
-    // Get user record
     const user = await ctx.db
       .query("users")
       .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
@@ -87,7 +80,6 @@ export const clearTypingState = mutation({
       throw new Error("User not found");
     }
 
-    // Find and delete typing state
     const typingState = await ctx.db
       .query("typingStates")
       .withIndex("by_conversation_and_user", (q) =>
@@ -112,13 +104,11 @@ export const getTypingState = query({
     conversationId: v.id("conversations"),
   },
   handler: async (ctx, args) => {
-    // Get authenticated user
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
       return [];
     }
 
-    // Get user record
     const user = await ctx.db
       .query("users")
       .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
@@ -128,13 +118,11 @@ export const getTypingState = query({
       return [];
     }
 
-    // Validate conversation exists and user is a member
     const conversation = await ctx.db.get(args.conversationId);
     if (!conversation || !conversation.participants.includes(identity.subject)) {
       return [];
     }
 
-    // Get all typing states for this conversation
     const typingStates = await ctx.db
       .query("typingStates")
       .withIndex("by_conversation_and_user", (q) =>
@@ -142,15 +130,13 @@ export const getTypingState = query({
       )
       .collect();
 
-    // Filter out current user and expired states
     const now = Date.now();
     const activeTypingStates = typingStates.filter(
       (state) =>
-        state.userId !== user._id && // Exclude current user
-        now - state.lastTypingAt < TYPING_TIMEOUT // Only active states
+        state.userId !== user._id &&
+        now - state.lastTypingAt < TYPING_TIMEOUT
     );
 
-    // Get user information for each typing state
     const typingUsers = await Promise.all(
       activeTypingStates.map(async (state) => {
         const typingUser = await ctx.db.get(state.userId);
@@ -229,14 +215,12 @@ export const cleanupExpiredTypingStates = internalMutation({
     const now = Date.now();
     const cutoffTime = now - CLEANUP_AGE;
 
-    // Find old typing states
     const oldStates = await ctx.db
       .query("typingStates")
       .withIndex("by_lastTypingAt")
       .filter((q) => q.lt(q.field("lastTypingAt"), cutoffTime))
       .collect();
 
-    // Delete old states
     for (const state of oldStates) {
       await ctx.db.delete(state._id);
     }

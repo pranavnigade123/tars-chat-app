@@ -10,7 +10,6 @@ import { useDebounce } from "@/lib/hooks/useDebouncedCallback";
 import { cn } from "@/lib/utils";
 import dynamic from "next/dynamic";
 
-// Dynamically import emoji picker to reduce bundle size
 const EmojiPicker = dynamic(() => import("emoji-picker-react"), { ssr: false });
 
 interface MessageInputProps {
@@ -33,7 +32,6 @@ export function MessageInputRedesigned({ conversationId, onMessageSent }: Messag
   const setTypingState = useMutation(api.typingStates.setTypingState);
   const clearTypingState = useMutation(api.typingStates.clearTypingState);
 
-  // Auto-resize textarea
   useEffect(() => {
     const textarea = textareaRef.current;
     if (textarea) {
@@ -42,7 +40,6 @@ export function MessageInputRedesigned({ conversationId, onMessageSent }: Messag
     }
   }, [content]);
 
-  // Debounced typing state update
   const debouncedSetTyping = useCallback(() => {
     setTypingState({ conversationId }).catch((err) => {
       console.error("Failed to set typing state:", err);
@@ -51,7 +48,6 @@ export function MessageInputRedesigned({ conversationId, onMessageSent }: Messag
 
   const debouncedTyping = useDebounce(debouncedSetTyping, 300);
 
-  // Clear typing state after 3 seconds of inactivity
   const handleTyping = useCallback(() => {
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
@@ -62,7 +58,6 @@ export function MessageInputRedesigned({ conversationId, onMessageSent }: Messag
     }, 3000);
   }, [conversationId, clearTypingState, debouncedTyping]);
 
-  // Cleanup on unmount or conversation change
   useEffect(() => {
     return () => {
       if (typingTimeoutRef.current) {
@@ -72,7 +67,6 @@ export function MessageInputRedesigned({ conversationId, onMessageSent }: Messag
     };
   }, [conversationId, clearTypingState]);
 
-  // Close emoji picker when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target as Node)) {
@@ -86,7 +80,6 @@ export function MessageInputRedesigned({ conversationId, onMessageSent }: Messag
     }
   }, [showEmojiPicker]);
 
-  // Load draft message from localStorage
   useEffect(() => {
     if (!conversationId) return;
     
@@ -114,7 +107,6 @@ export function MessageInputRedesigned({ conversationId, onMessageSent }: Messag
     setFailedMessage(null);
   }, [conversationId]);
 
-  // Save draft to localStorage
   useEffect(() => {
     if (!conversationId) return;
     
@@ -139,13 +131,11 @@ export function MessageInputRedesigned({ conversationId, onMessageSent }: Messag
     
     if (!trimmedContent) return;
 
-    // Clear typing state immediately before sending
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
     }
     clearTypingState({ conversationId }).catch(() => {});
 
-    // Clear input immediately for better UX (fast messaging)
     const messageToSend = trimmedContent;
     setContent("");
     setIsSending(true);
@@ -166,11 +156,9 @@ export function MessageInputRedesigned({ conversationId, onMessageSent }: Messag
       console.error("Failed to send message:", err);
       setError("Failed to send message.");
       setFailedMessage(messageToSend);
-      // Restore content on failure
       setContent(messageToSend);
     } finally {
       setIsSending(false);
-      // Keep focus on textarea after sending
       setTimeout(() => {
         textareaRef.current?.focus();
       }, 0);
@@ -201,7 +189,6 @@ export function MessageInputRedesigned({ conversationId, onMessageSent }: Messag
     clearTypingState({ conversationId }).catch(() => {});
   };
 
-  // Click handler for wrapper to focus textarea
   const handleWrapperClick = () => {
     textareaRef.current?.focus();
   };
@@ -238,7 +225,6 @@ export function MessageInputRedesigned({ conversationId, onMessageSent }: Messag
           isFocused && "border-gray-300 dark:border-[#3d3d3d] bg-white dark:bg-[#242424]"
         )}
       >
-        {/* Emoji Picker Popup */}
         {showEmojiPicker && (
           <div 
             ref={emojiPickerRef}
@@ -256,7 +242,6 @@ export function MessageInputRedesigned({ conversationId, onMessageSent }: Messag
           </div>
         )}
 
-        {/* Emoji Button */}
         <button
           type="button"
           onClick={(e) => {

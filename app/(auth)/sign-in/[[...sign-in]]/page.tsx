@@ -51,8 +51,8 @@ export default function SignInPage() {
             colorPrimary: "#3b82f6",
           } : undefined
         }}
-        afterSignUpUrl="/messages"
         fallbackRedirectUrl="/messages"
+        forceRedirectUrl="/messages"
       />
     </>
   );

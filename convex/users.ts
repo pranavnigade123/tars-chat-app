@@ -8,14 +8,12 @@ import { v } from "convex/values";
 export const getCurrentUser = query({
   args: {},
   handler: async (ctx) => {
-    // Get authenticated user from Clerk
     const identity = await ctx.auth.getUserIdentity();
     
     if (!identity) {
       return null;
     }
     
-    // Query Convex user by clerkId
     const user = await ctx.db
       .query("users")
       .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
@@ -37,14 +35,12 @@ export const syncUser = mutation({
     profileImage: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    // Check if user already exists
     const existingUser = await ctx.db
       .query("users")
       .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
       .unique();
     
     if (existingUser) {
-      // Update existing user
       await ctx.db.patch(existingUser._id, {
         name: args.name,
         email: args.email,
@@ -54,7 +50,6 @@ export const syncUser = mutation({
       
       return existingUser._id;
     } else {
-      // Create new user
       const userId = await ctx.db.insert("users", {
         clerkId: args.clerkId,
         name: args.name,
@@ -77,7 +72,6 @@ export const deleteUser = mutation({
     clerkId: v.string(),
   },
   handler: async (ctx, args) => {
-    // Find user
     const user = await ctx.db
       .query("users")
       .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
@@ -102,7 +96,6 @@ export const getAllUsersExceptCurrentWithStatus = query({
       .filter((q) => q.neq(q.field("clerkId"), args.currentUserId))
       .collect();
     
-    // Add computed isOnline field - Keep in sync with conversations.ts
     const ACTIVE_NOW_THRESHOLD = 10 * 1000; // 10 seconds (very fast offline detection)
     const now = Date.now();
     
@@ -129,7 +122,6 @@ export const getAllUsers = query({
       .filter((q) => q.neq(q.field("clerkId"), identity.subject))
       .collect();
     
-    // Add computed isOnline field - Keep in sync with conversations.ts
     const ACTIVE_NOW_THRESHOLD = 10 * 1000; // 10 seconds (very fast offline detection)
     const now = Date.now();
     
