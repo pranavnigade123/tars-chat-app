@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { MessageSquare, Users, User } from "lucide-react";
+import { MessageSquare, Compass, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function BottomNav() {
@@ -18,7 +18,7 @@ export function BottomNav() {
     {
       href: "/users",
       label: "People",
-      icon: Users,
+      icon: Compass,
       isActive: pathname === "/users",
     },
     {
@@ -45,7 +45,10 @@ export function BottomNav() {
                   : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 active:text-gray-900 dark:active:text-gray-100"
               )}
             >
-              <Icon className={cn("h-6 w-6", item.isActive && "fill-blue-600 dark:fill-gray-100")} />
+              <Icon 
+                className="h-6 w-6" 
+                strokeWidth={item.isActive ? 2.5 : 2}
+              />
               <span className={cn("text-xs font-medium", item.isActive && "font-semibold")}>
                 {item.label}
               </span>
