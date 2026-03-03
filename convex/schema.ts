@@ -25,8 +25,17 @@ export default defineSchema({
     groupImage: v.optional(v.string()),
     createdBy: v.optional(v.string()), // Clerk ID of group creator
   })
-    .index("by_conversation_id", ["conversationId"])
-    .index("by_participants", ["participants"]),
+    .index("by_conversation_id", ["conversationId"]),
+  
+  // Junction table: allows efficient lookup of conversations by user
+  // Eliminates the need for full table scans when fetching a user's conversations
+  conversationMembers: defineTable({
+    conversationId: v.id("conversations"),
+    userId: v.string(), // Clerk ID
+  })
+    .index("by_user", ["userId"])
+    .index("by_conversation", ["conversationId"])
+    .index("by_user_and_conversation", ["userId", "conversationId"]),
   
   messages: defineTable({
     conversationId: v.id("conversations"),

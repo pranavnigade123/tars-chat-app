@@ -28,6 +28,7 @@ export function MessageInputRedesigned({ conversationId, onMessageSent }: Messag
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
   
+  // Convex mutation to send a message to the backend
   const sendMessage = useMutation(api.messages.sendMessage);
   const setTypingState = useMutation(api.typingStates.setTypingState);
   const clearTypingState = useMutation(api.typingStates.clearTypingState);
@@ -126,24 +127,31 @@ export function MessageInputRedesigned({ conversationId, onMessageSent }: Messag
     return () => clearTimeout(timeoutId);
   }, [content, conversationId]);
 
+  // Handles sending a message via Convex sendMessage mutation
+  // Accepts optional overrideContent for retry scenarios
   const handleSend = async (overrideContent?: string) => {
     const trimmedContent = (overrideContent ?? content).trim();
     
+    // Don't send empty messages
     if (!trimmedContent) return;
 
+    // Clear typing indicator before sending
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
     }
     clearTypingState({ conversationId }).catch(() => {});
 
+    // Optimistically clear the input while we send
     const messageToSend = trimmedContent;
     setContent("");
     setIsSending(true);
     setError(null);
 
     try {
+      // Call Convex mutation: inserts message into DB & updates conversation timestamp
       await sendMessage({ conversationId, content: messageToSend });
 
+      
       setFailedMessage(null);
       
       const draftKey = `draft_${conversationId}`;
@@ -151,8 +159,10 @@ export function MessageInputRedesigned({ conversationId, onMessageSent }: Messag
       localStorage.removeItem(draftKey);
       localStorage.removeItem(draftTimestampKey);
       
+   
       onMessageSent?.();
     } catch (err) {
+      // On failure: restore the message text so user doesn't lose it
       console.error("Failed to send message:", err);
       setError("Failed to send message.");
       setFailedMessage(messageToSend);
@@ -165,6 +175,7 @@ export function MessageInputRedesigned({ conversationId, onMessageSent }: Messag
     }
   };
 
+  // Retries sending the last failed message by passing it back to handleSend
   const handleRetry = () => {
     if (failedMessage) {
       const messageToRetry = failedMessage;
@@ -174,6 +185,7 @@ export function MessageInputRedesigned({ conversationId, onMessageSent }: Messag
     }
   };
 
+  // Enter key triggers send; Shift+Enter allows newline
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();

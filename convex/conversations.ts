@@ -62,6 +62,14 @@ export const getOrCreateConversation = mutation({
         createdAt: Date.now(),
       });
 
+      // Insert membership rows for indexed lookup
+      for (const participantId of args.participantIds) {
+        await ctx.db.insert("conversationMembers", {
+          conversationId: newConversationId,
+          userId: participantId,
+        });
+      }
+
       return newConversationId;
     } catch (error) {
       // Handle race condition - conversation might have been created by another request
@@ -170,7 +178,8 @@ export const getConversationById = query({
 
 /**
  * Get all conversations for the current user
- * Returns conversations with participant info and latest message preview
+ * Uses the conversationMembers junction table for indexed lookup
+ * instead of scanning all conversations in the DB
  */
 export const getUserConversations = query({
   args: {},
@@ -181,12 +190,18 @@ export const getUserConversations = query({
       throw new Error("Not authenticated");
     }
 
-    // Get all conversations where user is a participant
-    const allConversations = await ctx.db.query("conversations").collect();
-    
-    const conversations = allConversations.filter((conv) =>
-      conv.participants.includes(identity.subject)
-    );
+    // Use junction table for indexed lookup — O(user's conversations) not O(all conversations)
+    const memberships = await ctx.db
+      .query("conversationMembers")
+      .withIndex("by_user", (q) => q.eq("userId", identity.subject))
+      .collect();
+
+    // Fetch the actual conversation docs by ID
+    const conversations = (
+      await Promise.all(
+        memberships.map((m) => ctx.db.get(m.conversationId))
+      )
+    ).filter((conv) => conv !== null);
 
     // Enrich conversations with participant info and latest message
     const enrichedConversations = await Promise.all(
@@ -348,6 +363,14 @@ export const createGroupConversation = mutation({
       createdBy: identity.subject,
     });
 
+    // Insert membership rows for indexed lookup
+    for (const participantId of allParticipants) {
+      await ctx.db.insert("conversationMembers", {
+        conversationId: newConversationId,
+        userId: participantId,
+      });
+    }
+
     return newConversationId;
   },
 });
@@ -412,5 +435,42 @@ export const getGroupMembers = query({
 
     // Filter out null values and return
     return members.filter((member) => member !== null);
+  },
+});
+
+/**
+ * One-time backfill: populate conversationMembers for all existing conversations.
+ * Run this once after deploying the schema change, then remove it.
+ * 
+ * Usage from Convex dashboard → Functions → Run:
+ *   conversations.backfillConversationMembers({})
+ */
+export const backfillConversationMembers = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const allConversations = await ctx.db.query("conversations").collect();
+    let inserted = 0;
+
+    for (const conversation of allConversations) {
+      for (const userId of conversation.participants) {
+        // Check if membership row already exists (idempotent)
+        const existing = await ctx.db
+          .query("conversationMembers")
+          .withIndex("by_user_and_conversation", (q) =>
+            q.eq("userId", userId).eq("conversationId", conversation._id)
+          )
+          .unique();
+
+        if (!existing) {
+          await ctx.db.insert("conversationMembers", {
+            conversationId: conversation._id,
+            userId,
+          });
+          inserted++;
+        }
+      }
+    }
+
+    return { backfilled: inserted, conversations: allConversations.length };
   },
 });
