@@ -8,7 +8,7 @@ import { ThemeToggle } from "@/components/features/navigation/ThemeToggle";
 import { UserButton } from "@clerk/nextjs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/utils/getInitials";
-import { MessageSquare, Users, CheckCircle, Calendar } from "lucide-react";
+import { MessageSquare, Compass, User, CheckCircle, Calendar } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
@@ -54,7 +54,7 @@ export default function ProfilePage() {
                 : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#2a2a2a]"
             )}
           >
-            <Users className="h-5 w-5" />
+            <Compass className="h-5 w-5" />
             <span className="text-[10px] font-medium">People</span>
           </Link>
           
@@ -70,7 +70,7 @@ export default function ProfilePage() {
                 : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#2a2a2a]"
             )}
           >
-            <Users className="h-5 w-5" />
+            <User className="h-5 w-5" />
             <span className="text-[10px] font-medium">Profile</span>
           </Link>
         </div>
@@ -174,7 +174,7 @@ export default function ProfilePage() {
                   className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-[#2a2a2a] transition-colors group"
                 >
                   <div className="flex items-center justify-center w-10 h-10 rounded-full bg-green-100 group-hover:bg-green-200 transition-colors">
-                    <Users className="h-5 w-5 text-green-600" />
+                    <Compass className="h-5 w-5 text-green-600" />
                   </div>
                   <div className="flex-1">
                     <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Find People</p>

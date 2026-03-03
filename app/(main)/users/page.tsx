@@ -8,7 +8,7 @@ import { UserList } from "@/components/features/users/UserList";
 import { BottomNav } from "@/components/features/navigation/BottomNav";
 import { ThemeToggle } from "@/components/features/navigation/ThemeToggle";
 import Link from "next/link";
-import { MessageSquare, Users, User } from "lucide-react";
+import { MessageSquare, Compass, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function UsersPage() {
@@ -53,7 +53,7 @@ export default function UsersPage() {
                 : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#2a2a2a]"
             )}
           >
-            <Users className="h-5 w-5" />
+            <Compass className="h-5 w-5" />
             <span className="text-[10px] font-medium">People</span>
           </Link>
           
